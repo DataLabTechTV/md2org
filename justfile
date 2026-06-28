@@ -42,17 +42,10 @@ diff-md src:
 sync-md src:
     rsync -Praz --delete --exclude=".*" "{{ src }}/" data/md/
 
-# Convert from markdown to org files, including directory structure
-convert: check
+_map-paths:
     #!/bin/bash
-
-    if [ -f data/meta.duckdb ]; then
-        just _error "file exists: data/meta.duckdb"
-        exit 1
-    fi
-
-    # from data/md to data/org, kebab-case, .md => .org
     just _info "Mapping directory and path names..."
+
     find data/md/ -type f ! -name ".*" | duckdb data/meta.duckdb -c "
         CREATE TABLE mapping AS
         SELECT * FROM read_csv_auto(
@@ -95,8 +88,32 @@ convert: check
         WHERE ft <> 'md';
     "
 
-    # remapping note directories as specified in data/remaps.conf
-    just _info "Applying user-specific remaps..."
+_convert-to-org:
+    @just _info "Converting all markdown files into org files..."
+    mkdir -p "data/tmp/content-creation/data-lab-tech/02-in-progress/"
+    pandoc -f markdown-implicit_header_references -t org \
+        --standalone \
+        --wrap=preserve \
+        --metadata title="Migrating Notes from Obsidian to Org Mode" \
+        "data/md/Content Creation/Data Lab Tech/02 - In Progress/P0 - Migrating Notes from Obsidian to Org Mode.md" \
+        -o - | sed '/:PROPERTIES:/,/^:END:/d' \
+        >"data/tmp/content-creation/data-lab-tech/02-in-progress/p0-migrating-notes-from-obsidian-to-org-mode.org"
+
+_remap-and-merge:
+    @just _info "Applying user-specific directory remaps and note merges..."
+
+# Convert from markdown to org files, including directory structure
+convert: check
+    #!/bin/bash
+
+    if [ -f data/meta.duckdb ]; then
+        just _error "file exists: data/meta.duckdb"
+        exit 1
+    fi
+
+    just _map-paths
+    just _convert-to-org
+    just _remap-and-merge
 
 preview-meta cols="*":
     duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM mapping"
