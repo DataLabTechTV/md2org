@@ -36,11 +36,11 @@ dist-clean: clean
 
 # Compare existing markdown notes with its source to make sure they're in sync
 diff-md src:
-    rsync -Praz --exclude=".*" --dry-run "{{ src }}/" data/md/
+    rsync -Praz --delete --exclude=".*" --dry-run "{{ src }}/" data/md/
 
 # Resync markdown notes with its source
 sync-md src:
-    rsync -Praz --exclude=".*" "{{ src }}/" data/md/
+    rsync -Praz --delete --exclude=".*" "{{ src }}/" data/md/
 
 # Convert from markdown to org files, including directory structure
 convert: check
