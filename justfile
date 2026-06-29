@@ -4,6 +4,10 @@ set shell := ["bash", "-cu"]
 default:
     @just -l -u
 
+_print msg *args:
+    #!/bin/bash
+    printf "$(tput setaf 8)  {{ msg }}$(tput sgr0)\n" {{ quote(args) }}
+
 _info msg *args:
     #!/bin/bash
     printf "$(tput setaf 4)▶ {{ msg }}$(tput sgr0)\n" {{ quote(args) }}
@@ -23,6 +27,7 @@ _check bin:
 check:
     @just _check rsync
     @just _check duckdb
+    @just _check mlr
     @just _check pandoc
 
 # Delete output (data/to-org/)
@@ -55,7 +60,6 @@ _map-paths:
         )
     "
 
-    # TODO cleanup md paths completely, but clean only dir path for other files
     duckdb data/meta.duckdb -c "
         UPDATE mapping SET src = replace(src, 'data/md/', '');
 
@@ -68,6 +72,7 @@ _map-paths:
 
         UPDATE mapping SET dst = dst.
             lower().
+            strip_accents().
             replace('.', '-').
             regexp_replace('(.*)-(.*)$', '\1.org').
             regexp_replace('[ \-–—]+', '-', 'g').
@@ -78,26 +83,49 @@ _map-paths:
         UPDATE mapping SET dst = dst.
             parse_dirpath().
             lower().
+            strip_accents().
             replace('.', '-').
             regexp_replace('(.*)-(.*)$', '\1.org').
             regexp_replace('[ \-–—]+', '-', 'g').
             regexp_replace(E'[\',]', '', 'g').
             replace('&', 'and') ||
             '/' ||
-            dst.parse_filename()
+            dst.parse_filename().strip_accents()
         WHERE ft <> 'md';
     "
 
+_create-dirs:
+    #!/bin/bash
+    just _info "Creating directory structure for org files..."
+    duckdb data/meta.duckdb -csv -noheader -c "
+        SELECT DISTINCT 'data/org/' || dst.parse_dirpath()
+        FROM mapping
+        WHERE ft = 'md'
+        ORDER BY dst
+    " | xargs mkdir -v -p
+
 _convert-to-org:
-    @just _info "Converting all markdown files into org files..."
-    mkdir -p "data/tmp/content-creation/data-lab-tech/02-in-progress/"
-    pandoc -f markdown-implicit_header_references -t org \
-        --standalone \
-        --wrap=preserve \
-        --metadata title="Migrating Notes from Obsidian to Org Mode" \
-        "data/md/Content Creation/Data Lab Tech/02 - In Progress/P0 - Migrating Notes from Obsidian to Org Mode.md" \
-        -o - | sed '/:PROPERTIES:/,/^:END:/d' \
-        >"data/tmp/content-creation/data-lab-tech/02-in-progress/p0-migrating-notes-from-obsidian-to-org-mode.org"
+    #!/bin/bash
+    just _info "Converting all markdown files into org files..."
+    duckdb data/meta.duckdb -csv -noheader -c "
+        SELECT
+            src.parse_filename().regexp_replace('\.md', '') AS title,
+            'data/md/' || src,
+            'data/org/' || dst
+        FROM mapping
+        WHERE ft = 'md'
+        ORDER BY dst
+    " |
+    mlr --icsv --otsv cat |
+    while IFS=$'\t' read -r title src dst; do
+        just _print "$title"
+        pandoc -f markdown-implicit_header_references -t org \
+            --standalone \
+            --wrap=preserve \
+            --metadata title="$title" \
+            "$src" -o - |
+            sed '/:PROPERTIES:/,/^:END:/d' >"$dst"
+    done
 
 _remap-and-merge:
     @just _info "Applying user-specific directory remaps and note merges..."
@@ -112,6 +140,7 @@ convert: check
     fi
 
     just _map-paths
+    just _create-dirs
     just _convert-to-org
     just _remap-and-merge
 
