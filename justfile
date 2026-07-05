@@ -4,17 +4,17 @@ set shell := ["bash", "-cu"]
 default:
     @just -l -u
 
-_print msg *args:
+_print msg:
     #!/bin/bash
-    printf "$(tput setaf 8)  {{ msg }}$(tput sgr0)\n" {{ quote(args) }}
+    printf "$(tput setaf 8)  %s$(tput sgr0)\n" {{ quote(msg) }}
 
-_info msg *args:
+_info msg:
     #!/bin/bash
-    printf "$(tput setaf 4)▶ {{ msg }}$(tput sgr0)\n" {{ quote(args) }}
+    printf "$(tput setaf 4)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
 
-_error msg *args:
+_error msg:
     #!/bin/bash
-    printf "$(tput setaf 1)▶ {{ msg }}$(tput sgr0)\n" {{ quote(args) }}
+    printf "$(tput setaf 1)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
 
 _check bin:
     #!/bin/bash
@@ -27,7 +27,6 @@ _check bin:
 check:
     @just _check rsync
     @just _check duckdb
-    @just _check mlr
     @just _check pandoc
 
 # Delete output (data/to-org/)
@@ -51,7 +50,7 @@ _map-paths:
     #!/bin/bash
     just _info "Mapping directory and path names..."
 
-    find data/md/ -type f ! -name ".*" | duckdb data/meta.duckdb -c "
+    find data/md/ -type f ! -name ".*" ! -name '*.excalidraw.md' | duckdb data/meta.duckdb -c "
         CREATE TABLE mapping AS
         SELECT * FROM read_csv_auto(
             '/dev/stdin',
@@ -107,16 +106,17 @@ _create-dirs:
 _convert-to-org:
     #!/bin/bash
     just _info "Converting all markdown files into org files..."
-    duckdb data/meta.duckdb -csv -noheader -c "
-        SELECT
-            src.parse_filename().regexp_replace('\.md', '') AS title,
-            'data/md/' || src,
-            'data/org/' || dst
-        FROM mapping
-        WHERE ft = 'md'
-        ORDER BY dst
+    duckdb data/meta.duckdb -c "
+        COPY (
+            SELECT
+                src.parse_filename().regexp_replace('\.md', '') AS title,
+                'data/md/' || src,
+                'data/org/' || dst
+            FROM mapping
+            WHERE ft = 'md'
+            ORDER BY dst
+        ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
     " |
-    mlr --icsv --otsv cat |
     while IFS=$'\t' read -r title src dst; do
         just _print "$title"
         pandoc -f markdown-implicit_header_references -t org \
