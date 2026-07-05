@@ -5,19 +5,16 @@ default:
     @just -l -u
 
 _print msg:
-    #!/bin/bash
-    printf "$(tput setaf 8)  %s$(tput sgr0)\n" {{ quote(msg) }}
+    @printf "$(tput setaf 8)  %s$(tput sgr0)\n" {{ quote(msg) }}
 
 _info msg:
-    #!/bin/bash
-    printf "$(tput setaf 4)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
+    @printf "$(tput setaf 4)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
 
 _error msg:
-    #!/bin/bash
-    printf "$(tput setaf 1)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
+    @printf "$(tput setaf 1)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
 
 _check bin:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -euo pipefail
     echo -n "Checking {{ bin }}... "
     test -x "$(command -v {{ bin }})" || (echo "failed (no executable {{ bin }} was found)"; exit 1)
@@ -47,7 +44,7 @@ sync-md src:
     rsync -Praz --delete --exclude=".*" "{{ src }}/" data/md/
 
 _map-paths:
-    #!/bin/bash
+    #!/usr/bin/env bash
     just _info "Mapping directory and path names..."
 
     find data/md/ -type f ! -name ".*" ! -name '*.excalidraw.md' | duckdb data/meta.duckdb -c "
@@ -60,10 +57,13 @@ _map-paths:
     "
 
     duckdb data/meta.duckdb -c "
-        UPDATE mapping SET src = replace(src, 'data/md/', '');
+        UPDATE mapping SET src = src.replace('data/md/', '');
 
         ALTER TABLE mapping ADD COLUMN ft VARCHAR;
-        UPDATE mapping SET ft = lower(regexp_extract(parse_filename(src), '.*\.(.*)', 1));
+        UPDATE mapping SET ft = src.
+            parse_filename().
+            regexp_extract('.*\.(.*)', 1).
+            lower();
 
         ALTER TABLE mapping ADD COLUMN dst VARCHAR;
 
@@ -94,7 +94,7 @@ _map-paths:
     "
 
 _create-dirs:
-    #!/bin/bash
+    #!/usr/bin/env bash
     just _info "Creating directory structure for org files..."
     duckdb data/meta.duckdb -csv -noheader -c "
         SELECT DISTINCT 'data/org/' || dst.parse_dirpath()
@@ -104,7 +104,7 @@ _create-dirs:
     " | xargs mkdir -v -p
 
 _convert-to-org:
-    #!/bin/bash
+    #!/usr/bin/env bash
     just _info "Converting all markdown files into org files..."
     duckdb data/meta.duckdb -c "
         COPY (
@@ -132,7 +132,7 @@ _remap-and-merge:
 
 # Convert from markdown to org files, including directory structure
 convert: check
-    #!/bin/bash
+    #!/usr/bin/env bash
 
     if [ -f data/meta.duckdb ]; then
         just _error "file exists: data/meta.duckdb"
