@@ -104,21 +104,20 @@ _convert-to-org:
             WHERE ft = 'md'
             ORDER BY dst
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
-    " |
-    while IFS=$'\t' read -r title src dst; do
-        just _print "$title"
+    " | parallel --colsep '\t' -j $(nproc --ignore=2) '
+        just _print {1}
         merge="yes"
         todo="TODO"
         pandoc -f markdown-implicit_header_references -t org \
             --standalone \
             --wrap=preserve \
-            --metadata title="$title" \
+            --metadata title={1} \
             --metadata merge="$merge" \
             --metadata todo="$todo" \
             --lua-filter=filter.lua \
-            "$src" -o - |
-            sed '/:PROPERTIES:/,/^:END:/d' >"$dst"
-    done
+            {2} -o - |
+            sed "/:PROPERTIES:/,/^:END:/d" >"{3}"
+    '
 
 _remap-and-merge:
     @just _info "Applying user-specific directory remaps and note merges..."
