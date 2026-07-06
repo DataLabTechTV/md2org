@@ -119,10 +119,15 @@ _convert-to-org:
     " |
     while IFS=$'\t' read -r title src dst; do
         just _print "$title"
+        merge="yes"
+        todo="TODO"
         pandoc -f markdown-implicit_header_references -t org \
             --standalone \
             --wrap=preserve \
             --metadata title="$title" \
+            --metadata merge="$merge" \
+            --metadata todo="$todo" \
+            --lua-filter=filter.lua \
             "$src" -o - |
             sed '/:PROPERTIES:/,/^:END:/d' >"$dst"
     done
