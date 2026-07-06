@@ -1,0 +1,18 @@
+remap:
+  - output: content/videos.org
+    inputs:
+      - source: content-creation/data-lab-tech/*.org
+        section: Channel
+        index: 1
+      - source: content-creation/data-lab-tech/00-inbox/*.org
+        todo: IDEA
+      - source: content-creation/data-lab-tech/01-planned/*.org
+        todo: TODO
+      - source: content-creation/data-lab-tech/02-in-progress/*.org
+        todo: STRT
+      - source: content-creation/data-lab-tech/03-published/*.org
+        todo: DONE
+      - source: content-creation/data-lab-tech/90-on-hold/*.org
+        todo: HOLD
+      - source: content-creation/data-lab-tech/99-abandoned/*.org
+        todo: KILL

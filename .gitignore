@@ -1,4 +1,5 @@
 # Project
+config.yaml
 data/**
 !data/**/
 !.gitkeep

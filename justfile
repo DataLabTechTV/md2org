@@ -119,7 +119,7 @@ _convert-to-org:
             sed "/:PROPERTIES:/,/^:END:/d" >"{3}"
     '
 
-_remap-and-merge:
+_remap:
     @just _info "Applying user-specific directory remaps and note merges..."
 
 # Convert from markdown to org files, including directory structure
@@ -133,8 +133,10 @@ convert: check
 
     just _map-paths
     just _create-dirs
+    # just _convert-excalidraw
+    # just _fix-image-tags
     just _convert-to-org
-    just _remap-and-merge
+    just _remap
 
 preview-meta cols="*":
     duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM paths"
