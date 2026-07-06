@@ -76,21 +76,9 @@ _map-paths:
             regexp_replace('(.*)-(.*)$', '\1.org').
             regexp_replace('[ \-–—]+', '-', 'g').
             regexp_replace(E'[\',]', '', 'g').
-            replace('&', 'and')
-        WHERE ft = 'md';
+            replace('&', 'and');
 
-        UPDATE mapping SET dst = dst.
-            parse_dirpath().
-            lower().
-            strip_accents().
-            replace('.', '-').
-            regexp_replace('(.*)-(.*)$', '\1.org').
-            regexp_replace('[ \-–—]+', '-', 'g').
-            regexp_replace(E'[\',]', '', 'g').
-            replace('&', 'and') ||
-            '/' ||
-            dst.parse_filename().strip_accents()
-        WHERE ft <> 'md';
+        UPDATE mapping SET dst = dst.regexp_replace('attachments', 'assets');
     "
 
 _create-dirs:
