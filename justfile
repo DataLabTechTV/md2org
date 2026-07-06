@@ -104,7 +104,7 @@ _convert-to-org:
             WHERE ft = 'md'
             ORDER BY dst
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
-    " | parallel --colsep '\t' -j $(nproc --ignore=2) '
+    " | parallel --colsep='\t' --jobs=-2 '
         just _print {1}
         merge="yes"
         todo="TODO"
