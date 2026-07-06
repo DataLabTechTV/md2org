@@ -45,10 +45,10 @@ sync-md src:
 
 _map-paths:
     #!/usr/bin/env bash
-    just _info "Mapping directory and path names..."
+    just _info "Mapping directory and file names to kebab-case..."
 
     find data/md/ -type f ! -name ".*" ! -name '*.excalidraw.md' | duckdb data/meta.duckdb -c "
-        CREATE TABLE mapping AS
+        CREATE TABLE paths AS
         SELECT * FROM read_csv_auto(
             '/dev/stdin',
             header=false,
@@ -57,19 +57,19 @@ _map-paths:
     "
 
     duckdb data/meta.duckdb -c "
-        UPDATE mapping SET src = src.replace('data/md/', '');
+        UPDATE paths SET src = src.replace('data/md/', '');
 
-        ALTER TABLE mapping ADD COLUMN ft VARCHAR;
-        UPDATE mapping SET ft = src.
+        ALTER TABLE paths ADD COLUMN ft VARCHAR;
+        UPDATE paths SET ft = src.
             parse_filename().
             regexp_extract('.*\.(.*)', 1).
             lower();
 
-        ALTER TABLE mapping ADD COLUMN dst VARCHAR;
+        ALTER TABLE paths ADD COLUMN dst VARCHAR;
 
-        UPDATE mapping SET dst = src.replace('data/md/', 'data/org/');
+        UPDATE paths SET dst = src.replace('data/md/', 'data/org/');
 
-        UPDATE mapping SET dst = dst.
+        UPDATE paths SET dst = dst.
             lower().
             strip_accents().
             replace('.', '-').
@@ -78,7 +78,7 @@ _map-paths:
             regexp_replace(E'[\',]', '', 'g').
             replace('&', 'and');
 
-        UPDATE mapping SET dst = dst.regexp_replace('attachments', 'assets');
+        UPDATE paths SET dst = dst.regexp_replace('attachments', 'assets');
     "
 
 _create-dirs:
@@ -86,7 +86,7 @@ _create-dirs:
     just _info "Creating directory structure for org files..."
     duckdb data/meta.duckdb -csv -noheader -c "
         SELECT DISTINCT 'data/org/' || dst.parse_dirpath()
-        FROM mapping
+        FROM paths
         WHERE ft = 'md'
         ORDER BY dst
     " | xargs mkdir -v -p
@@ -100,7 +100,7 @@ _convert-to-org:
                 src.parse_filename().regexp_replace('\.md', '') AS title,
                 'data/md/' || src,
                 'data/org/' || dst
-            FROM mapping
+            FROM paths
             WHERE ft = 'md'
             ORDER BY dst
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
@@ -137,4 +137,4 @@ convert: check
     just _remap-and-merge
 
 preview-meta cols="*":
-    duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM mapping"
+    duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM paths"
