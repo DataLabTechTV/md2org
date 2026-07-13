@@ -25,6 +25,7 @@ check:
     @just _check rsync
     @just _check duckdb
     @just _check pandoc
+    @just _check yq
 
 # Delete output (data/to-org/)
 clean:
@@ -120,17 +121,29 @@ _convert-to-org:
     '
 
 _remap:
-    @just _info "Applying user-specific directory remaps and note merges..."
+    #!/usr/bin/env bash
+    # set -eux
+    shopt -s globstar nullglob
+
+    just _info "Applying user-specific directory remaps and note merges..."
+
+    for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
+        output=$(yq ".remap[$oidx].output" config.yaml)
+        echo "[$oidx] output: $output"
+        for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
+            source="data/org/"$(yq ".remap[$oidx].inputs[$iidx].source" config.yaml)
+            matches=( $source )
+            echo "[$oidx, $iidx] source: $source"
+            printf '%s\n' "${matches[@]}"
+            echo
+        done
+    done
+
 
 # Convert from markdown to org files, including directory structure
 convert: check
     #!/usr/bin/env bash
-
-    if [ -f data/meta.duckdb ]; then
-        just _error "file exists: data/meta.duckdb"
-        exit 1
-    fi
-
+    rm -rfv data/meta.duckdb
     just _map-paths
     just _create-dirs
     # just _convert-excalidraw
@@ -138,5 +151,5 @@ convert: check
     just _convert-to-org
     just _remap
 
-preview-meta cols="*":
+inspect-meta cols="*":
     duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM paths"
