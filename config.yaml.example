@@ -2,8 +2,7 @@ remap:
   - output: content/videos.org
     inputs:
       - source: content-creation/data-lab-tech/*.org
-        section: Channel
-        index: 1
+        outer_heading: Channel
       - source: content-creation/data-lab-tech/00-inbox/*.org
         todo: IDEA
       - source: content-creation/data-lab-tech/01-planned/*.org
@@ -16,3 +15,11 @@ remap:
         todo: HOLD
       - source: content-creation/data-lab-tech/99-abandoned/*.org
         todo: KILL
+  - output: content/writing.org
+    inputs:
+      - source: philosophy/*.org
+      - source: life/life-story-in-tech.org
+  - output: knowledge/data-science.org
+    inputs:
+      - source: data-science/**/*.org
+        path_as_headings: true
