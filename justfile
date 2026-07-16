@@ -29,7 +29,7 @@ check:
 
 # Delete output (data/to-org/)
 clean:
-    find data/org/ -mindepth 1 ! -name .gitkeep -exec rm -rfv {} +
+    find data/org/ data/org-remapped/ -mindepth 1 ! -name .gitkeep -exec rm -rfv {} +
     rm -fv data/meta.duckdb
 
 # Delete input (data/from-md/) and output (data/to-org/)
@@ -120,20 +120,28 @@ _convert-to-org:
             sed "/:PROPERTIES:/,/^:END:/d" >"{3}"
     '
 
+_prepare-merge $source $todo="" $outer_heading="" $path_as_headings="false":
+    #!/usr/bin/env bash
+    echo "source: $source, outer_heading: $outer_heading, todo: $todo, path_as_headings: $path_as_headings"
+
 _remap:
     #!/usr/bin/env bash
-    # set -eux
     shopt -s globstar nullglob
-
     just _info "Applying user-specific directory remaps and note merges..."
 
     for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
         output=$(yq ".remap[$oidx].output" config.yaml)
         echo "[$oidx] output: $output"
         for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
-            source="data/org/"$(yq ".remap[$oidx].inputs[$iidx].source" config.yaml)
+            input=".remap[$oidx].inputs[$iidx]"
+            source="data/org/"$(yq "${input}.source" config.yaml)
+            outer_heading=$(yq "${input}.outer_heading // \"\"" config.yaml)
+            todo=$(yq "${input}.todo // \"\"" config.yaml)
+            path_as_headings=$(yq "${input}.path_as_headings // false" config.yaml)
+
+            just _prepare-merge "$source" "$todo" "$outer_heading" "$path_as_headings"
+
             matches=( $source )
-            echo "[$oidx, $iidx] source: $source"
             printf '%s\n' "${matches[@]}"
             echo
         done
