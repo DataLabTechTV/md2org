@@ -15,8 +15,8 @@ function Pandoc(doc)
   local header = pandoc.Header(1, title)
 
   -- If a todo keyword is specified, prefix the top-level heading with it
-  local todo = pandoc.utils.stringify(doc.meta.todo or "")
-  if todo ~= "" then
+  local todo = pandoc.utils.stringify(doc.meta.todo or "null")
+  if todo ~= "null" then
     table.insert(header.content, 1, pandoc.Space())
     table.insert(header.content, 1, todo)
   end

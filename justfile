@@ -107,32 +107,33 @@ _convert-to-org:
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
     " | parallel --colsep='\t' --jobs=-2 '
         just _print {1}
-        pandoc -f markdown -t org \
+        pandoc -f markdown-auto_identifiers -t org \
             --standalone \
             --wrap=preserve \
             --metadata title={1} \
-            {2} -o - |
-            sed "/:PROPERTIES:/,/^:END:/d" >"{3}"
+            {2} -o {3}
     '
 
 _reset-org-remapped:
     rsync -Praz --delete --exclude='.gitkeep' data/org/ data/org-remapped/
 
-_prepare-merge $path $todo="" $path_as_headings="false":
+_prepare-merge path todo outer_heading path_as_headings:
     #!/usr/bin/env bash
     set -euo pipefail
-    just _info "Preparing for merge: $path"
-    just _print "todo: ${todo:-[EMPTY]}"
-    just _print "path_as_headings: $path_as_headings"
+    just _info "Preparing for merge: {{ path }}"
+    just _print "todo: {{ todo }}"
+    just _print "outer_heading: {{ outer_heading }}"
+    just _print "path_as_headings: {{ path_as_headings }}"
     tmpfile=$(mktemp)
-    pandoc -f org -t org \
+    pandoc -f org-auto_identifiers -t org \
         --standalone \
         --wrap=preserve \
-        --metadata todo="$todo" \
+        --metadata todo="{{ todo }}" \
+        --metadata outer_heading="{{ outer_heading }}" \
+        --metadata path_as_headings="{{ path_as_headings }}" \
         --lua-filter=prepare_merge.lua \
-        "${path}" -o - |
-        sed "/:PROPERTIES:/,/^:END:/d" >"$tmpfile"
-    mv "$tmpfile" "$path"
+        "{{ path }}" -o "$tmpfile"
+    mv "$tmpfile" "{{ path }}"
 
 _remap:
     #!/usr/bin/env bash
@@ -148,18 +149,18 @@ _remap:
             input=".remap[$oidx].inputs[$iidx]"
 
             source="data/org-remapped/"$(yq "${input}.source" config.yaml)
-            outer_heading=$(yq "${input}.outer_heading // \"\"" config.yaml)
-            todo=$(yq "${input}.todo // \"\"" config.yaml)
+            outer_heading=$(yq "${input}.outer_heading" config.yaml)
+            todo=$(yq "${input}.todo" config.yaml)
             path_as_headings=$(yq "${input}.path_as_headings // false" config.yaml)
 
             matches=($source)
 
             printf '%s\n' "${matches[@]}" | parallel --jobs=-2 "
-                just _prepare-merge {1} "$todo" "$path_as_headings"
+                just _prepare-merge {1} "$todo" "$outer_heading" "$path_as_headings"
             "
         done
 
-        # TODO handle $outer_reading
+        # TODO combine org with pandoc -f org-auto_identifiers -t org
     done
 
 
