@@ -117,7 +117,7 @@ _convert-to-org:
 _reset-org-remapped:
     rsync -Praz --delete --exclude='.gitkeep' data/org/ data/org-remapped/
 
-_prepare-merge path todo outer_heading path_as_headings:
+_prepare-merge path root todo outer_heading path_as_headings path_as_headings_root:
     #!/usr/bin/env bash
     set -euo pipefail
     just _info "Preparing for merge: {{ path }}"
@@ -128,9 +128,11 @@ _prepare-merge path todo outer_heading path_as_headings:
     pandoc -f org-auto_identifiers -t org \
         --standalone \
         --wrap=preserve \
+        --metadata root="{{ root }}" \
         --metadata todo="{{ todo }}" \
         --metadata outer_heading="{{ outer_heading }}" \
         --metadata path_as_headings="{{ path_as_headings }}" \
+        --metadata path_as_headings_root="{{ path_as_headings_root }}" \
         --lua-filter=prepare_merge.lua \
         "{{ path }}" -o "$tmpfile"
     mv "$tmpfile" "{{ path }}"
@@ -152,11 +154,17 @@ _remap:
             outer_heading=$(yq "${input}.outer_heading" config.yaml)
             todo=$(yq "${input}.todo" config.yaml)
             path_as_headings=$(yq "${input}.path_as_headings // false" config.yaml)
+            path_as_headings_root=$(yq "${input}.path_as_headings_root" config.yaml)
 
             matches=($source)
 
             printf '%s\n' "${matches[@]}" | parallel --jobs=-2 "
-                just _prepare-merge {1} "$todo" "$outer_heading" "$path_as_headings"
+                just _prepare-merge {1} \
+                    "data/org-remapped/" \
+                    "$todo" \
+                    "$outer_heading" \
+                    "$path_as_headings" \
+                    "$path_as_headings_root"
             "
         done
 

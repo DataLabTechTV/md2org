@@ -23,3 +23,4 @@ remap:
     inputs:
       - source: data-science/**/*.org
         path_as_headings: true
+        path_as_headings_root: data-science/
