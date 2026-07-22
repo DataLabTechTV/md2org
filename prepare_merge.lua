@@ -1,4 +1,4 @@
-function dir_as_title(s)
+local function dir_as_title(s)
   local title = s:gsub("[-_]+", " ")
   title = title:gsub(
     "(%a)([%w]*)", function(first, rest)

@@ -140,12 +140,12 @@ _prepare-merge path root todo outer_heading path_as_headings path_as_headings_ro
 _remap:
     #!/usr/bin/env bash
     shopt -s globstar nullglob
-    just _info "Applying user-specific directory remaps and note merges..."
+    just _info "Applying user-specific remaps..."
     just _reset-org-remapped
 
     for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
         output="data/org-remapped/"$(yq ".remap[$oidx].output" config.yaml)
-        just _info "Merging sources into output: $output"
+        just _info "Parsing sources for output: $output"
 
         for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
             input=".remap[$oidx].inputs[$iidx]"
@@ -167,10 +167,44 @@ _remap:
                     "$path_as_headings_root"
             "
         done
-
-        # TODO combine org with pandoc -f org-auto_identifiers -t org
     done
 
+_merge:
+    #!/usr/bin/env bash
+    shopt -s globstar nullglob
+    just _info "Applying user-specific org file merges..."
+
+    for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
+        output="data/org-remapped/"$(yq ".remap[$oidx].output" config.yaml)
+        title=$(yq ".remap[$oidx].title // \"Title\"" config.yaml)
+        just _info "Merging sources into output: $output"
+
+        srcs=()
+
+        for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
+            input=".remap[$oidx].inputs[$iidx]"
+            source="data/org-remapped/"$(yq "${input}.source" config.yaml)
+            matches=($source)
+            srcs+=("${matches[@]}")
+        done
+
+        # TODO combine org with pandoc -f org-auto_identifiers -t org
+        # TODO merge sections with the same headings at the same levels
+        # TODO remove merged files
+
+        printf '%s\n' "${srcs[@]}"
+
+        outdir=$(dirname "$output")
+        mkdir -p "$outdir"
+
+        pandoc -f org-auto_identifiers -t org \
+            --standalone \
+            --wrap=preserve \
+            --metadata title="$title" \
+            --lua-filter=merge.lua \
+            "${srcs[@]}" \
+            -o "$output"
+    done
 
 # Convert from markdown to org files, including directory structure
 convert: check
@@ -182,6 +216,7 @@ convert: check
     # just _fix-image-tags
     just _convert-to-org
     # just _remap
+    # just _merge
 
 inspect-meta cols="*":
     duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM paths"
