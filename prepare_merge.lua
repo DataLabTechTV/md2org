@@ -15,7 +15,7 @@ function Pandoc(doc)
   local outer_header = nil
   local outer_heading = pandoc.utils.stringify(doc.meta.outer_heading or "null")
   if outer_heading ~= "null" then
-    outer_header = pandoc.Header(2, outer_heading)
+    outer_header = pandoc.Header(1, outer_heading)
     n = n + 1
   end
 
@@ -28,7 +28,7 @@ function Pandoc(doc)
     local dirname = pandoc.path.directory(pandoc.path.make_relative(PANDOC_STATE.input_files[1], root))
     local parts = pandoc.path.split(dirname)
     for i, part in ipairs(parts) do
-      local path_header = pandoc.Header(i+n, dir_as_title(part))
+      local path_header = pandoc.Header(i+n-1, dir_as_title(part))
       path_headers[#path_headers + 1] = path_header
     end
     n = n + #parts
@@ -37,7 +37,7 @@ function Pandoc(doc)
   -- Increase all heading levels by n+1
   local doc = doc:walk {
     Header = function(h)
-      h.level = h.level + n + 1
+      h.level = h.level + n
       return h
     end
   }
@@ -59,7 +59,7 @@ function Pandoc(doc)
   if title == "" then
     error("no title found")
   end
-  local title_header = pandoc.Header(n+1, title)
+  local title_header = pandoc.Header(n, title)
 
   -- If a todo keyword is specified, prefix the title header with it
   local todo = pandoc.utils.stringify(doc.meta.todo or "null")
