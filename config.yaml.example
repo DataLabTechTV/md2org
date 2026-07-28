@@ -1,5 +1,6 @@
 remap:
   - output: content/videos.org
+    title: Videos
     inputs:
       - source: content-creation/data-lab-tech/*.org
         outer_heading: Channel
@@ -16,10 +17,12 @@ remap:
       - source: content-creation/data-lab-tech/99-abandoned/*.org
         todo: KILL
   - output: content/writing.org
+    title: Writing
     inputs:
       - source: philosophy/*.org
       - source: life/life-story-in-tech.org
   - output: knowledge/data-science.org
+    title: Data Science
     inputs:
       - source: data-science/**/*.org
         path_as_headings: true
