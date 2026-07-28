@@ -124,6 +124,7 @@ _prepare-merge path root todo outer_heading path_as_headings path_as_headings_ro
     just _print "todo: {{ todo }}"
     just _print "outer_heading: {{ outer_heading }}"
     just _print "path_as_headings: {{ path_as_headings }}"
+    just _print "path_as_headings_root: {{ path_as_headings_root }}"
     tmpfile=$(mktemp)
     pandoc -f org-auto_identifiers -t org \
         --standalone \
@@ -150,12 +151,18 @@ _remap:
         for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
             input=".remap[$oidx].inputs[$iidx]"
 
-            source="data/org-remapped/"$(yq "${input}.source" config.yaml)
+            source=$(yq "${input}.source" config.yaml)
             outer_heading=$(yq "${input}.outer_heading" config.yaml)
             todo=$(yq "${input}.todo" config.yaml)
             path_as_headings=$(yq "${input}.path_as_headings // false" config.yaml)
-            path_as_headings_root=$(yq "${input}.path_as_headings_root" config.yaml)
 
+            path_as_headings_root="null"
+            if [ "$path_as_headings" = "true" ]; then
+                path_as_headings_root="${source%%[*?[]*}"
+                path_as_headings_root="${path_as_headings_root%/*}"
+            fi
+
+            source="data/org-remapped/${source}"
             matches=($source)
 
             printf '%s\n' "${matches[@]}" | parallel --jobs=-2 "
@@ -215,7 +222,7 @@ convert: check
     # just _convert-excalidraw
     # just _fix-image-tags
     just _convert-to-org
-    # just _remap
+    just _remap
     # just _merge
 
 inspect-meta cols="*":
