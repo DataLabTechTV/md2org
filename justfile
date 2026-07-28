@@ -4,14 +4,23 @@ set shell := ["bash", "-cu"]
 default:
     @just -l -u
 
-_print msg:
-    @printf "$(tput setaf 8)  %s$(tput sgr0)\n" {{ quote(msg) }}
+_print msg *args:
+    @printf "$(tput setaf 8)  {{ msg }}$(tput sgr0)\n" {{ args }}
 
 _info msg:
     @printf "$(tput setaf 4)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
 
+_warn msg:
+    @printf "$(tput setaf 3)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
+
 _error msg:
     @printf "$(tput setaf 1)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
+
+_prune-empty-dirs root_path:
+    #!/usr/bin/env bash
+    while find {{ root_path }} -mindepth 1 -type d -empty -print -quit | grep -q .; do
+        find {{ root_path }} -mindepth 1 -depth -type d -empty -exec rmdir -v {} +
+    done
 
 _check bin:
     #!/usr/bin/env bash
@@ -195,11 +204,12 @@ _merge:
             srcs+=("${matches[@]}")
         done
 
-        # TODO combine org with pandoc -f org-auto_identifiers -t org
-        # TODO merge sections with the same headings at the same levels
-        # TODO remove merged files
+        if [ "${#srcs[@]}" -eq 0 ]; then
+            just _warn "No sources for output: $output"
+            continue
+        fi
 
-        printf '%s\n' "${srcs[@]}"
+        just _print '%s' "${srcs[@]}"
 
         outdir=$(dirname "$output")
         mkdir -p "$outdir"
@@ -211,6 +221,10 @@ _merge:
             --lua-filter=merge.lua \
             "${srcs[@]}" \
             -o "$output"
+
+        just _info "Removing sources and empty directories for output: $output"
+        rm -v -- "${srcs[@]}"
+        just _prune-empty-dirs data/org-remapped/
     done
 
 # Convert from markdown to org files, including directory structure
@@ -222,8 +236,9 @@ convert: check
     # just _convert-excalidraw
     # just _fix-image-tags
     just _convert-to-org
+    # just _fix-link-tags
     just _remap
-    # just _merge
+    just _merge
 
 inspect-meta cols="*":
     duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM paths"
