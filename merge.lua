@@ -1,7 +1,13 @@
-local function header_key(h)
-  return ("%d:%s"):format(
-    h.level,
-    pandoc.utils.stringify(h.content))
+local function header_key(stack, h)
+  local parts = {}
+
+  for _, parent in ipairs(stack) do
+    table.insert(parts, pandoc.utils.stringify(parent.content))
+  end
+
+  table.insert(parts, pandoc.utils.stringify(h.content))
+
+  return table.concat(parts, "/")
 end
 
 function Pandoc(doc)
@@ -9,10 +15,15 @@ function Pandoc(doc)
   local order = pandoc.List:new()
 
   local current = nil
+  local stack = {}
 
   for _, block in ipairs(doc.blocks) do
     if block.t == "Header" then
-      local key = header_key(block)
+      while #stack > 0 and stack[#stack].level >= block.level do
+        table.remove(stack)
+      end
+
+      local key = header_key(stack, block)
 
       if not sections[key] then
         sections[key] = pandoc.List:new({ block })
@@ -20,6 +31,7 @@ function Pandoc(doc)
       end
 
       current = sections[key]
+      stack[#stack + 1] = block
     else
       if current then
         current:insert(block)
