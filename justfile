@@ -1,5 +1,8 @@
 set shell := ["bash", "-cu"]
 
+# Set this env var to the value of your Basic → Excalidraw folder setting for Obsidian
+excalidraw_dir := env("EXCALIDRAW_DIR", "Excalidraw")
+
 # List all recipes
 default:
     @just -l -u
@@ -36,7 +39,10 @@ check:
     just _check rsync
     just _check duckdb
     just _check pandoc
+    just _check jq
     just _check yq
+    just _check podman
+    just _check base64
     just _check go-lz-string || echo "Install with: go install github.com/daku10/go-lz-string/cmd/go-lz-string@v0.0.7"
 
 # Delete output (data/to-org/)
@@ -94,12 +100,12 @@ _map-paths:
             replace('&', 'and');
 
         UPDATE paths
-        SET dst = dst.replace('attachments', 'assets')
+        SET dst = dst.replace('/attachments/', '/assets/')
         WHERE ft <> 'excalidraw';
 
         UPDATE paths
         SET dst = dst.
-            replace('attachments', 'diagrams').
+            replace('/attachments/', '/diagrams/').
             replace('-excalidraw.org', '.excalidraw')
         WHERE ft = 'excalidraw';
     "
@@ -110,7 +116,6 @@ _create-dirs:
     duckdb data/meta.duckdb -csv -noheader -c "
         SELECT DISTINCT 'data/org/' || dst.parse_dirpath()
         FROM paths
-        WHERE ft = 'md'
         ORDER BY dst
     " | xargs mkdir -v -p
 
@@ -136,24 +141,77 @@ _convert-to-org:
             {2} -o {3}
     '
 
+_excalirender workdir *args:
+    podman run --rm --volume "{{ workdir }}:/data:z" --workdir /data docker.io/jonarc06/excalirender {{ args }}
+
 _convert-excalidraw:
     #!/usr/bin/env bash
-    # TODO copy .excalidraw.md to data/org/ according to subpaths from meta.duckdb
-    just _info "Copying and converting excalidraw diagrams..."
+    just _info "Copying and converting Excalidraw diagrams to PNG..."
+
+    # Convert .excalidraw.md to .excalidraw, embedding images
     duckdb data/meta.duckdb -c "
         COPY (
-            SELECT 'data/md/' || src
+            SELECT
+                'data/md/' || src,
+                'data/org/' || dst
             FROM paths
             WHERE ft = 'excalidraw'
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
     " | parallel --colsep='\t' --jobs=-2 '
         just _debug {1}
+
+        tmpfile="$(mktemp)"
+        awk "BEGIN { json=0 } /^\`\`\`/ { json=!json; next } json" {1} |
+            tr -d "\n" |
+            go-lz-string decompress -m base64 \
+            >"$tmpfile"
+
+        embed_tmpfile="$(mktemp)"
+        awk "
+            BEGIN { files=0 }
+            /^## Embedded Files/ { files=1; next }
+            /^%%/ { files=0 }
+            files
+        " {1} |
+            tr -s "\n" |
+            sed -e "s/://" -e "s/[][]//g" |
+            while IFS= read -r line; do
+                hash=$(echo $line | cut -d" " -f1)
+                filename=$(echo $line | cut -d" " -f 2-)
+                path=$(find data/md/ -path "*$filename*")
+                mime=$(file --brief --mime-type "$path")
+                base64=$(printf "data:%s;base64,%s\n" \
+                    "$mime" \
+                    $(base64 -w0 "$path"))
+                printf "{\"key\":\"%s\",\"value\":{\"mimeType\":\"%s\",\"id\":\"%s\",\"dataURL\":\"%s\"}}\n" \
+                    "$hash" \
+                    "$mime" \
+                    "$hash" \
+                    "$base64"
+            done >"$embed_tmpfile"
+
+        # FIXME this doesnt work yet
+        jq -s --slurpfile entries <(jq -s "." "$embed_tmpfile") "
+            .files = (
+                .files + (
+                    $entries[0] | map({(.key): .value}) | add
+                )
+            )
+        " "$tmpfile"
+
+        mv "$tmpfile" {2}
     '
 
-    # TODO convert .excalidraw.md to .excalidraw
-    # TODO move .excalidraw to a diagrams/ dir
-    # TODO render .excalidraw as .png into an assets/ dir
-    # TODO update .excalidraw.md entries on the meta.duckdb
+    # Create directories
+    duckdb data/meta.duckdb -csv -noheader -c "
+        SELECT DISTINCT 'data/org/' || dst.
+            replace('/diagrams/', '/assets/').
+            parse_dirpath()
+        FROM paths
+        WHERE ft = 'excalidraw';
+    " | xargs mkdir -v -p
+
+    just _excalirender ./data/org --recursive --scale 3.0 .
 
 _copy-assets:
     #!/usr/bin/env bash
