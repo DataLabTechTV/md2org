@@ -124,10 +124,22 @@ _convert-to-org:
             {2} -o {3}
     '
 
+_convert-excalidraw:
+    # TODO convert .excalidraw.md to .excalidraw
+    # TODO move .excalidraw to a diagrams/ dir
+    # TODO render .excalidraw as .png into an assets/ dir
+
+_fix-link-paths:
+    # TODO convert into kebab case paths according to meta.duckdb
+
+_fix-image-paths:
+    # TODO convert into kebab case paths according to meta.duckdb
+    # TODO make sure that excalidraw diagram links point to the png assets (might need to revise meta.duckdb)
+
 _reset-org-remapped:
     rsync -Praz --delete --exclude='.gitkeep' data/org/ data/org-remapped/
 
-_prepare-merge path root todo outer_heading path_as_headings path_as_headings_root:
+_restruct-file path root todo outer_heading path_as_headings path_as_headings_root:
     #!/usr/bin/env bash
     set -euo pipefail
     just _info "Preparing for merge: {{ path }}"
@@ -148,7 +160,7 @@ _prepare-merge path root todo outer_heading path_as_headings path_as_headings_ro
         "{{ path }}" -o "$tmpfile"
     mv "$tmpfile" "{{ path }}"
 
-_remap:
+_restruct:
     #!/usr/bin/env bash
     shopt -s globstar nullglob
     just _info "Applying user-specific remaps..."
@@ -173,10 +185,10 @@ _remap:
             fi
 
             source="data/org-remapped/${source}"
-            matches=($source)
+            files=($source)
 
-            printf '%s\n' "${matches[@]}" | parallel --jobs=-2 "
-                just _prepare-merge {1} \
+            printf '%s\n' "${files[@]}" | parallel --jobs=-2 "
+                just _restruct-file {1} \
                     "data/org-remapped/" \
                     "$todo" \
                     "$outer_heading" \
@@ -201,8 +213,8 @@ _merge:
         for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
             input=".remap[$oidx].inputs[$iidx]"
             source="data/org-remapped/"$(yq "${input}.source" config.yaml)
-            matches=($source)
-            srcs+=("${matches[@]}")
+            files=($source)
+            srcs+=("${files[@]}")
         done
 
         if [ "${#srcs[@]}" -eq 0 ]; then
@@ -228,18 +240,22 @@ _merge:
         just _prune-empty-dirs data/org-remapped/
     done
 
+_fix-merged-link-paths:
+    # TODO convert links pointing to merged source files into links to the merged output section
+
 # Convert from markdown to org files, including directory structure
 convert: check
     #!/usr/bin/env bash
     rm -rfv data/meta.duckdb
     just _map-paths
     just _create-dirs
-    # just _convert-excalidraw
-    # just _fix-image-tags
     just _convert-to-org
-    # just _fix-link-tags
-    just _remap
+    just _convert-excalidraw
+    just _fix-image-paths
+    just _fix-link-paths
+    just _restruct
     just _merge
+    just _fix-merged-link-paths
 
 inspect-meta cols="*":
     duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM paths"
