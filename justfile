@@ -75,6 +75,8 @@ _map-paths:
             parse_filename().
             regexp_extract('.*\.(.*)', 1).
             lower();
+        UPDATE paths SET ft = 'excalidraw'
+        WHERE src ILIKE '%.excalidraw.md';
 
         ALTER TABLE paths ADD COLUMN dst VARCHAR;
 
@@ -89,7 +91,15 @@ _map-paths:
             regexp_replace(E'[\',]', '', 'g').
             replace('&', 'and');
 
-        UPDATE paths SET dst = dst.regexp_replace('attachments', 'assets');
+        UPDATE paths
+        SET dst = dst.replace('attachments', 'assets')
+        WHERE ft <> 'excalidraw';
+
+        UPDATE paths
+        SET dst = dst.
+            replace('attachments', 'diagrams').
+            replace('-excalidraw.org', '.excalidraw')
+        WHERE ft = 'excalidraw';
     "
 
 _create-dirs:
@@ -112,7 +122,7 @@ _convert-to-org:
                 'data/md/' || src,
                 'data/org/' || dst
             FROM paths
-            WHERE ft = 'md' AND src NOT ILIKE '%.excalidraw.md'
+            WHERE ft = 'md'
             ORDER BY dst
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
     " | parallel --colsep='\t' --jobs=-2 '
@@ -125,16 +135,35 @@ _convert-to-org:
     '
 
 _convert-excalidraw:
+    #!/usr/bin/env bash
+    # TODO copy .excalidraw.md to data/org/ according to subpaths from meta.duckdb
+    just _info "Copying and converting excalidraw diagrams..."
+    duckdb data/meta.duckdb -c "
+        COPY (
+            SELECT 'data/md/' || src
+            FROM paths
+            WHERE ft = 'excalidraw'
+        ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
+    " | parallel --colsep='\t' --jobs=-2 '
+        just _debug {1}
+    '
+
     # TODO convert .excalidraw.md to .excalidraw
     # TODO move .excalidraw to a diagrams/ dir
     # TODO render .excalidraw as .png into an assets/ dir
+    # TODO update .excalidraw.md entries on the meta.duckdb
+
+_copy-assets:
+    #!/usr/bin/env bash
+    # TODO copy remaining files, excluding md and excalidraw
 
 _fix-link-paths:
+    #!/usr/bin/env bash
     # TODO convert into kebab case paths according to meta.duckdb
 
 _fix-image-paths:
+    #!/usr/bin/env bash
     # TODO convert into kebab case paths according to meta.duckdb
-    # TODO make sure that excalidraw diagram links point to the png assets (might need to revise meta.duckdb)
 
 _reset-org-remapped:
     rsync -Praz --delete --exclude='.gitkeep' data/org/ data/org-remapped/
@@ -251,11 +280,12 @@ convert: check
     just _create-dirs
     just _convert-to-org
     just _convert-excalidraw
-    just _fix-image-paths
-    just _fix-link-paths
-    just _restruct
-    just _merge
-    just _fix-merged-link-paths
+    # just _copy-assets
+    # just _fix-image-paths
+    # just _fix-link-paths
+    # just _restruct
+    # just _merge
+    # just _fix-merged-link-paths
 
 inspect-meta cols="*":
     duckdb data/meta.duckdb -c "SELECT {{ cols }} FROM paths"
