@@ -32,10 +32,12 @@ _check bin:
 # Check if system dependencies are available
 check:
     #!/usr/bin/env bash
+    set -e
     just _check rsync
     just _check duckdb
     just _check pandoc
     just _check yq
+    just _check go-lz-string || echo "Install with: go install github.com/daku10/go-lz-string/cmd/go-lz-string@v0.0.7"
 
 # Delete output (data/to-org/)
 clean:
