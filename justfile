@@ -4,17 +4,17 @@ set shell := ["bash", "-cu"]
 default:
     @just -l -u
 
-_print msg *args:
-    @printf "$(tput setaf 8)  {{ msg }}$(tput sgr0)\n" {{ args }}
+_debug msg *args:
+    @printf "$(tput setaf 8)D {{ msg }}$(tput sgr0)\n" {{ args }}
 
-_info msg:
-    @printf "$(tput setaf 4)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
+_info msg *args:
+    @printf "$(tput setaf 4)I {{ msg }}$(tput sgr0)\n" {{ args }}
 
-_warn msg:
-    @printf "$(tput setaf 3)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
+_warn msg *args:
+    @printf "$(tput setaf 3)W {{ msg }}$(tput sgr0)\n" {{ args }}
 
-_error msg:
-    @printf "$(tput setaf 1)▶ %s$(tput sgr0)\n" {{ quote(msg) }}
+_error msg *args:
+    @printf "$(tput setaf 1)E {{ msg }}$(tput sgr0)\n" {{ args }}
 
 _prune-empty-dirs root_path:
     #!/usr/bin/env bash
@@ -31,10 +31,11 @@ _check bin:
 
 # Check if system dependencies are available
 check:
-    @just _check rsync
-    @just _check duckdb
-    @just _check pandoc
-    @just _check yq
+    #!/usr/bin/env bash
+    just _check rsync
+    just _check duckdb
+    just _check pandoc
+    just _check yq
 
 # Delete output (data/to-org/)
 clean:
@@ -115,7 +116,7 @@ _convert-to-org:
             ORDER BY dst
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
     " | parallel --colsep='\t' --jobs=-2 '
-        just _print {1}
+        just _debug {1}
         pandoc -f markdown-auto_identifiers -t org \
             --standalone \
             --wrap=preserve \
@@ -130,10 +131,10 @@ _prepare-merge path root todo outer_heading path_as_headings path_as_headings_ro
     #!/usr/bin/env bash
     set -euo pipefail
     just _info "Preparing for merge: {{ path }}"
-    just _print "todo: {{ todo }}"
-    just _print "outer_heading: {{ outer_heading }}"
-    just _print "path_as_headings: {{ path_as_headings }}"
-    just _print "path_as_headings_root: {{ path_as_headings_root }}"
+    just _debug "todo: {{ todo }}"
+    just _debug "outer_heading: {{ outer_heading }}"
+    just _debug "path_as_headings: {{ path_as_headings }}"
+    just _debug "path_as_headings_root: {{ path_as_headings_root }}"
     tmpfile=$(mktemp)
     pandoc -f org-auto_identifiers -t org \
         --standalone \
@@ -209,7 +210,7 @@ _merge:
             continue
         fi
 
-        just _print '%s' "${srcs[@]}"
+        just _debug 'source: %s' "${srcs[@]}"
 
         outdir=$(dirname "$output")
         mkdir -p "$outdir"
