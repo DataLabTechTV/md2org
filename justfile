@@ -58,7 +58,7 @@ _map-paths:
     #!/usr/bin/env bash
     just _info "Mapping directory and file names to kebab-case..."
 
-    find data/md/ -type f ! -name ".*" ! -name '*.excalidraw.md' | duckdb data/meta.duckdb -c "
+    find data/md/ -type f ! -name ".*" | duckdb data/meta.duckdb -c "
         CREATE TABLE paths AS
         SELECT * FROM read_csv_auto(
             '/dev/stdin',
@@ -112,7 +112,7 @@ _convert-to-org:
                 'data/md/' || src,
                 'data/org/' || dst
             FROM paths
-            WHERE ft = 'md'
+            WHERE ft = 'md' AND src NOT ILIKE '%.excalidraw.md'
             ORDER BY dst
         ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
     " | parallel --colsep='\t' --jobs=-2 '
