@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 usage() {
     echo "Usage: ${0##*/} SRC DST"
     echo
