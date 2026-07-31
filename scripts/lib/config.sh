@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-CONFIG_SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
+CONFIG_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASE_DIR="$(readlink -f "$CONFIG_SCRIPT_DIR/../..")"
 
 SCRIPTS_DIR="$BASE_DIR/scripts"
