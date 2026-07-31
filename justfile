@@ -40,8 +40,10 @@ check:
     just _check pandoc
     just _check jq
     just _check yq
+    just _check xmlstarlet
     just _check podman
     just _check base64
+    just _check magick
     just _check go-lz-string || echo "Install with: go install github.com/daku10/go-lz-string/cmd/go-lz-string@v0.0.7"
 
 # Delete output (data/to-org/)
