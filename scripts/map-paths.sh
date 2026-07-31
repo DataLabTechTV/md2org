@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")"
+
+. "$SCRIPT_DIR/lib/config.sh"
+. "$SCRIPT_DIR/lib/logging.sh"
+
+log INFO "Mapping directory and file names to kebab-case..."
+log DEBUG "Metadata DB: %s" "$META_PATH"
+
+find "$MD_DIR" -type f ! -name ".*" -exec realpath --relative-to="$BASE_DIR" {} + |
+    duckdb "$META_PATH" "
+        CREATE TABLE paths AS
+        SELECT * FROM read_csv_auto(
+            '/dev/stdin',
+            header=false,
+            columns={'src': VARCHAR}
+        )
+    "
+
+duckdb "$META_PATH" "
+    UPDATE paths SET src = src.replace('data/md/', '');
+
+    ALTER TABLE paths ADD COLUMN ft VARCHAR;
+    UPDATE paths SET ft = src.
+        parse_filename().
+        regexp_extract('.*\.(.*)', 1).
+        lower();
+    UPDATE paths SET ft = 'excalidraw'
+    WHERE src ILIKE '%.excalidraw.md';
+
+    ALTER TABLE paths ADD COLUMN dst VARCHAR;
+
+    UPDATE paths SET dst = src.replace('data/md/', 'data/org/');
+
+    UPDATE paths SET dst = dst.
+        lower().
+        strip_accents().
+        replace('.', '-').
+        regexp_replace('(.*)-(.*)$', '\1.org').
+        regexp_replace('[ \-–—]+', '-', 'g').
+        regexp_replace(E'[\',]', '', 'g').
+        replace('&', 'and');
+
+    UPDATE paths
+    SET dst = dst.replace('/attachments/', '/assets/')
+    WHERE ft <> 'excalidraw';
+
+    UPDATE paths
+    SET dst = dst.
+        replace('/attachments/', '/diagrams/').
+        replace('-excalidraw.org', '.excalidraw')
+    WHERE ft = 'excalidraw';
+"
