@@ -11,8 +11,8 @@ log INFO "Copying and converting Excalidraw diagrams to PNG..."
 duckdb "$META_PATH" -c "
     COPY (
         SELECT
-            'data/md/' || src,
-            'data/org/' || dst
+            '$REL_MD_DIR/' || src,
+            '$REL_ORG_DIR/' || dst
         FROM paths
         WHERE ft = 'excalidraw'
     ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
@@ -20,11 +20,11 @@ duckdb "$META_PATH" -c "
 
 # Create directories
 duckdb "$META_PATH" -csv -noheader -c "
-    SELECT DISTINCT 'data/org/' || dst.
+    SELECT DISTINCT '$REL_ORG_DIR/' || dst.
         replace('/diagrams/', '/assets/').
         parse_dirpath()
     FROM paths
     WHERE ft = 'excalidraw';
 " | xargs mkdir -v -p
 
-"$SCRIPT_DIR/excalirender-wrapper.sh" ./data/org --recursive --scale 3.0 .
+"$SCRIPT_DIR/excalirender-wrapper.sh" "$ORG_DIR" --recursive --scale 3.0 .

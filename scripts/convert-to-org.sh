@@ -12,8 +12,8 @@ duckdb "$META_PATH" -c "
     COPY (
         SELECT
             src.parse_filename().regexp_replace('\.md', '') AS title,
-            'data/md/' || src,
-            'data/org/' || dst
+            '$REL_MD_DIR/' || src,
+            '$REL_ORG_DIR/' || dst
         FROM paths
         WHERE ft = 'md'
         ORDER BY dst

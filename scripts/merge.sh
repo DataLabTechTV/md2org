@@ -11,7 +11,7 @@ shopt -s globstar nullglob
 log INFO "Applying user-specific org file merges..."
 
 for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
-    output="data/org-remapped/$(yq ".remap[$oidx].output" config.yaml)"
+    output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" config.yaml)"
     title="$(yq ".remap[$oidx].title // \"Title\"" config.yaml)"
 
     log INFO "Merging sources into output: $output"
@@ -20,7 +20,7 @@ for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
 
     for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
         input=".remap[$oidx].inputs[$iidx]"
-        source="data/org-remapped/$(yq "${input}.source" config.yaml)"
+        source="$REL_ORG_REMAPPED_DIR/$(yq "${input}.source" config.yaml)"
         files=( $source )
         srcs+=( ${files[@]} )
     done

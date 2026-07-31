@@ -19,7 +19,7 @@ find "$MD_DIR" -type f ! -name ".*" -exec realpath --relative-to="$BASE_DIR" {} 
     "
 
 duckdb "$META_PATH" "
-    UPDATE paths SET src = src.replace('data/md/', '');
+    UPDATE paths SET src = src.replace('$REL_MD_DIR/', '');
 
     ALTER TABLE paths ADD COLUMN ft VARCHAR;
     UPDATE paths SET ft = src.
@@ -31,7 +31,7 @@ duckdb "$META_PATH" "
 
     ALTER TABLE paths ADD COLUMN dst VARCHAR;
 
-    UPDATE paths SET dst = src.replace('data/md/', 'data/org/');
+    UPDATE paths SET dst = src.replace('$REL_MD_DIR/', '$REL_ORG_DIR/');
 
     UPDATE paths SET dst = dst.
         lower().

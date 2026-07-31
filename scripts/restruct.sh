@@ -15,7 +15,7 @@ shopt -s globstar nullglob
 log INFO "Applying user-specific remaps..."
 
 for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
-    output="data/org-remapped/"$(yq ".remap[$oidx].output" config.yaml)
+    output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" config.yaml)"
     log INFO "Parsing sources for output: $output"
 
     for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
