@@ -21,7 +21,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 src=$1
 dst=$2
 
-log DEBUG "$src"
+log DEBUG "src: $src"
+log DEBUG "dst: $dst"
 
 tmpfile="$(mktemp "/tmp/md2org.excalidraw.XXXXXXXXXX")"
 log DEBUG "tmpfile: $tmpfile"
@@ -41,26 +42,45 @@ awk '
     tr -s "\n" |
     sed -e "s/://" -e "s/[][]//g" |
     while IFS= read -r line; do
-        hash=$(echo "$line" | cut -d" " -f1)
-        filename=$(echo "$line" | cut -d" " -f 2-)
-        path=$(find "$MD_DIR" -path "*$filename*")
-        mime=$(file --brief --mime-type "$path")
-        base64=$(printf "data:%s;base64,%s\n" \
+        hash="$(echo "$line" | cut -d" " -f1)"
+        filename="$(echo "$line" | cut -d" " -f 2-)"
+        path="$(find "$MD_DIR" -path "*$filename*")"
+        mime="$(file --brief --mime-type "$path")"
+
+        case $mime in
+            image/svg*)
+                viewbox=$(xmlstarlet sel -t -v '/*[local-name()="svg"]/@viewBox' "$path")
+                read -r _ _ width height <<<"$viewbox"
+                base64="$(xmlstarlet ed \
+                    -i '/*[local-name()="svg" and not(@width)]' -t attr -n width -v "$width" \
+                    -i '/*[local-name()="svg" and not(@height)]' -t attr -n height -v "$height" \
+                    "$path" | base64 -w0)"
+                ;;
+            image/webp)
+                base64="$(magick "$path" "png:-" | base64 -w0)"
+                ;;
+            *)
+                base64="$(base64 -w0 "$path")"
+                ;;
+        esac
+
+        dataURL=$(printf "data:%s;base64,%s\n" \
             "$mime" \
-            "$(base64 -w0 "$path")")
+            "$base64")
+
         printf "{\"mimeType\":\"%s\",\"id\":\"%s\",\"dataURL\":\"%s\"}\n" \
             "$mime" \
             "$hash" \
-            "$base64"
+            "$dataURL"
     done >"$embed_tmpfile"
 
 jq --slurpfile entries <(jq -s '.' "$embed_tmpfile") '
     .files = (
         .files + (
-            $entries[0] | map({(.id): .}) | add
+            $entries[] | map({(.id): .}) | add
         )
     )
 ' "$tmpfile" >"$dst"
 
-rm -fv "$tmpfile"
-rm -fv "$embed_tmpfile"
+# rm -fv "$tmpfile"
+# rm -fv "$embed_tmpfile"
