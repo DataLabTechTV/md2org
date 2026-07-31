@@ -51,6 +51,9 @@ awk '
             image/svg*)
                 viewbox=$(xmlstarlet sel -t -v '/*[local-name()="svg"]/@viewBox' "$path")
                 read -r _ _ width height <<<"$viewbox"
+                scale=$((600/"$width"))
+                width=$(("$scale" * "$width"))
+                height=$(("$scale" * "$height"))
                 base64="$(xmlstarlet ed \
                     -i '/*[local-name()="svg" and not(@width)]' -t attr -n width -v "$width" \
                     -i '/*[local-name()="svg" and not(@height)]' -t attr -n height -v "$height" \
