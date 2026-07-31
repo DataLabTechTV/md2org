@@ -1,23 +1,28 @@
 set shell := ["bash", "-cu"]
 
-# Set this env var to the value of your Basic → Excalidraw folder setting for Obsidian
-excalidraw_dir := env("EXCALIDRAW_DIR", "Excalidraw")
-
 # List all recipes
 default:
     @just -l -u
 
 _debug msg *args:
-    @printf "$(tput setaf 8)D {{ msg }}$(tput sgr0)\n" {{ args }}
+    #!/usr/bin/env bash
+    . scripts/lib/logging.sh
+    log DEBUG {{ msg }} {{ args }}
 
 _info msg *args:
-    @printf "$(tput setaf 4)I {{ msg }}$(tput sgr0)\n" {{ args }}
+    #!/usr/bin/env bash
+    . scripts/lib/logging.sh
+    log INFO {{ msg }} {{ args }}
 
 _warn msg *args:
-    @printf "$(tput setaf 3)W {{ msg }}$(tput sgr0)\n" {{ args }}
+    #!/usr/bin/env bash
+    . scripts/lib/logging.sh
+    log WARN {{ msg }} {{ args }}
 
 _error msg *args:
-    @printf "$(tput setaf 1)E {{ msg }}$(tput sgr0)\n" {{ args }}
+    #!/usr/bin/env bash
+    . scripts/lib/logging.sh
+    log ERROR {{ msg }} {{ args }}
 
 _check bin:
     #!/usr/bin/env bash
