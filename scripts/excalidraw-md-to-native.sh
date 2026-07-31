@@ -85,5 +85,5 @@ jq --slurpfile entries <(jq -s '.' "$embed_tmpfile") '
     )
 ' "$tmpfile" >"$dst"
 
-# rm -fv "$tmpfile"
-# rm -fv "$embed_tmpfile"
+rm -fv "$tmpfile"
+rm -fv "$embed_tmpfile"
