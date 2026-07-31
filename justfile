@@ -68,7 +68,7 @@ convert: check
     ./scripts/map-paths.sh
     ./scripts/create-dirs.sh
     ./scripts/convert-to-org.sh
-    ./scripts/convert-excalidraw.sh
+    # ./scripts/convert-excalidraw.sh
 
     # TODO copy remaining files, excluding md and excalidraw
     # ./scripts/copy-assets.sh

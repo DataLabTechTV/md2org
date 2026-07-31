@@ -20,11 +20,12 @@ duckdb "$META_PATH" -c "
         WHERE ft = 'md'
         ORDER BY dst
     ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
-" | parallel --colsep='\t' --jobs=-2 '
+" | parallel --colsep='\t' --jobs=-2 "
     log DEBUG {1}
     pandoc -f markdown-auto_identifiers -t org \
         --standalone \
-        --wrap="preserve" \
-        --metadata="title:"{1} \
+        --wrap=preserve \
+        --metadata=title:{1} \
+        --lua-filter=\"$FILTERS_DIR/fix_links.lua\" \
         {2} -o {3}
-'
+"
