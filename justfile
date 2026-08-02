@@ -68,19 +68,14 @@ convert: check
     ./scripts/map-paths.sh
     ./scripts/create-dirs.sh
     ./scripts/convert-to-org.sh
-    # ./scripts/convert-excalidraw.sh
 
-    # TODO copy remaining files, excluding md and excalidraw
-    # ./scripts/copy-assets.sh
+    # TODO move converted diagrams to ../assets
+    ./scripts/convert-excalidraw.sh
 
-    # TODO convert into kebab case paths according to meta.duckdb
-    # ./scripts/fix-image-paths.sh
-
-    # TODO convert into kebab case paths according to meta.duckdb
-    # ./scripts/fix-link-paths.sh
+    ./scripts/copy-assets.sh
 
     # ./scripts/restruct.sh
+
+    # TODO convert links pointing to merged source files into links to the merged output section in pandoc-lua
     # ./scripts/merge.sh
 
-    # TODO convert links pointing to merged source files into links to the merged output section
-    # ./scripts/fix-merged-link-paths.sh

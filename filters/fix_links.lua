@@ -36,13 +36,18 @@ local function urldecode(s)
   )
 end
 
-local function to_normalized_org_path(path)
+local function to_normalized_path(path, ft)
+  if not ft then
+    _, ext = pandoc.path.split_extension(path)
+    ft = ext:gsub("^%.", ""):lower()
+  end
+
   path = urldecode(path)
   path = strip_accents(path)
   path = path
     :lower()
     :gsub("([^%.])%.([^%.])", "%1-%2")
-    :gsub("(.*)%-(.*)$", "%1.org")
+    :gsub("(.*)%-(.*)$", "%1." .. ft)
     :gsub("[ %-%–—]+", "-")
     :gsub("[',]", "")
     :gsub("&", "and")
@@ -62,20 +67,20 @@ function Link(link)
     return link
   end
 
-  -- print("CONTENT: " .. pandoc.utils.stringify(link.content))
-  -- print("TARGET: " .. link.target)
-  -- -- TODO fix file/image links
-  -- print("UPDATED: " .. link.target)
-
   -- Fix internal links with a fragment
   local file, fragment = link.target:match("^(.-)#(.+)$")
   if file and fragment then
-    link.target = "file:" .. to_normalized_org_path(file) .. "::*" .. fragment
+    link.target = "file:" .. to_normalized_path(file, "org") .. "::*" .. fragment
     return link
   end
 
   -- Fix remaining internal links
-  link.target = to_normalized_org_path(link.target)
+  link.target = to_normalized_path(link.target, "org")
 
   return link
+end
+
+function Image(img)
+  img.src = to_normalized_path(img.src):gsub("attachments/", "assets/")
+  return img
 end

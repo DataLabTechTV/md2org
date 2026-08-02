@@ -39,7 +39,7 @@ duckdb "$META_PATH" "
         lower().
         strip_accents().
         replace('.', '-').
-        regexp_replace('(.*)-(.*)$', '\1.org').
+        regexp_replace('(.*)-(.*)$', '\1.' || ft).
         regexp_replace('[ \-–—]+', '-', 'g').
         regexp_replace(E'[\',]', '', 'g').
         replace('&', 'and');
@@ -51,6 +51,6 @@ duckdb "$META_PATH" "
     UPDATE paths
     SET dst = dst.
         replace('/attachments/', '/diagrams/').
-        replace('-excalidraw.org', '.excalidraw')
+        replace('-excalidraw.excalidraw', '.excalidraw')
     WHERE ft = 'excalidraw';
 "
