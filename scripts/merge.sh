@@ -32,7 +32,7 @@ for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
         continue
     fi
 
-    log DEBUG "%s" "${srcs[@]}"
+    log DEBUG "[+] %s" "${srcs[@]}"
 
     outdir=$(dirname "$output")
     mkdir -p "$outdir"

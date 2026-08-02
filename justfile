@@ -83,5 +83,4 @@ remap: check
     ./scripts/restruct.sh
 
     # TODO convert links pointing to merged source files into links to the merged output section in pandoc-lua
-    # ./scripts/merge.sh
-
+    ./scripts/merge.sh
