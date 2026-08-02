@@ -29,8 +29,9 @@ outer_heading=$4
 path_as_headings=$5
 path_as_headings_root=$6
 
-log INFO "Preparing for merge: $path"
+log INFO "Retructuring '$path'..."
 
+log DEBUG "root: $root"
 log DEBUG "todo: $todo"
 log DEBUG "outer_heading: $outer_heading"
 log DEBUG "path_as_headings: $path_as_headings"

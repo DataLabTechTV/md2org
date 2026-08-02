@@ -12,11 +12,11 @@ rsync -Praz --delete --exclude='.gitkeep' "$ORG_DIR/" "$ORG_REMAPPED_DIR/"
 
 shopt -s globstar nullglob
 
-log INFO "Applying user-specific remaps..."
+log INFO "Restructuring org files according to 'config.yaml'..."
 
 for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
     output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" config.yaml)"
-    log INFO "Parsing sources for output: $output"
+    log DEBUG "Parsing sources for output '$output'..."
 
     for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
         input=".remap[$oidx].inputs[$iidx]"
