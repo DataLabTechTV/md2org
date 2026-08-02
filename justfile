@@ -32,6 +32,7 @@ _check bin:
     echo ok
 
 # Check if system dependencies are available
+[group('util')]
 check:
     #!/usr/bin/env bash
     set -e
@@ -47,34 +48,39 @@ check:
     just _check go-lz-string || echo "Install with: go install github.com/daku10/go-lz-string/cmd/go-lz-string@v0.0.7"
 
 # Delete output (data/to-org/)
+[group('build')]
 clean:
     find data/org/ data/org-remapped/ -mindepth 1 ! -name .gitkeep -exec rm -rfv {} +
     rm -fv data/meta.duckdb
 
 # Delete input (data/from-md/) and output (data/to-org/)
+[group('build')]
 dist-clean: clean
     find data/md/ -mindepth 1 ! -name .gitkeep -exec rm -rfv {} +
 
 # Compare existing markdown notes with its source to make sure they're in sync
+[group('util')]
 diff-md src:
     rsync -Praz --delete --exclude=".*" --dry-run "{{ src }}/" data/md/
 
 # Resync markdown notes with its source
+[group('util')]
 sync-md src:
     rsync -Praz --delete --exclude=".*" "{{ src }}/" data/md/
 
 # Convert from markdown to org files, including directory structure
+[group('build')]
 convert: check
     ./scripts/map-paths.sh
     ./scripts/create-dirs.sh
     ./scripts/convert-to-org.sh
-
-    # TODO move converted diagrams to ../assets
     ./scripts/convert-excalidraw.sh
-
     ./scripts/copy-assets.sh
 
-    # ./scripts/restruct.sh
+# Apply the rules on config.yaml to restructure and merge the converted org files
+[group('build')]
+remap: check
+    ./scripts/restruct.sh
 
     # TODO convert links pointing to merged source files into links to the merged output section in pandoc-lua
     # ./scripts/merge.sh
