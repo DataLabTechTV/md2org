@@ -10,13 +10,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 shopt -s globstar nullglob
 
-log INFO "Applying user-specific org file merges..."
+log INFO "Merging org files according to 'config.yaml'..."
 
 for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
     output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" config.yaml)"
     title="$(yq ".remap[$oidx].title // \"Title\"" config.yaml)"
 
-    log INFO "Merging sources into output: $output"
+    log INFO "Merging sources into output '$output'..."
 
     srcs=()
 
@@ -28,11 +28,11 @@ for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
     done
 
     if [ "${#srcs[@]}" -eq 0 ]; then
-        log WARN "No sources for output: $output"
+        log WARN "No sources for output '$output'"
         continue
     fi
 
-    log DEBUG "source: %s" "${srcs[@]}"
+    log DEBUG "%s" "${srcs[@]}"
 
     outdir=$(dirname "$output")
     mkdir -p "$outdir"
@@ -45,7 +45,7 @@ for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
         "${srcs[@]}" \
         -o "$output"
 
-    log INFO "Removing sources and empty directories for output: $output"
+    log INFO "Removing sources and empty directories for output '$output'..."
     rm -v -- "${srcs[@]}"
     prune_empty_dirs "$ORG_REMAPPED_DIR"
 done

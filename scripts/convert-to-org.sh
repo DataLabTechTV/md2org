@@ -21,7 +21,7 @@ duckdb "$META_PATH" -c "
         ORDER BY dst
     ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
 " | parallel --colsep='\t' --jobs=-2 "
-    log DEBUG {1}
+    log DEBUG {2}\" -> \"{3}
     pandoc -f markdown-auto_identifiers-citations -t org \
         --standalone \
         --wrap=preserve \

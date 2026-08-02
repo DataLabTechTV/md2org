@@ -21,8 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 src=$1
 dst=$2
 
-log DEBUG "src: $src"
-log DEBUG "dst: $dst"
+log DEBUG "$src -> $dst"
 
 tmpfile="$(mktemp "/tmp/md2org.excalidraw.XXXXXXXXXX")"
 log DEBUG "tmpfile: $tmpfile"
