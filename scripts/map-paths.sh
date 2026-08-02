@@ -39,7 +39,7 @@ duckdb "$META_PATH" "
         lower().
         strip_accents().
         replace('.', '-').
-        regexp_replace('(.*)-(.*)$', '\1.' || ft).
+        regexp_replace('(.*)-(.*)$', '\1.' || (CASE WHEN ft = 'md' THEN 'org' ELSE ft END)).
         regexp_replace('[ \-–—]+', '-', 'g').
         regexp_replace(E'[\',]', '', 'g').
         replace('&', 'and');
