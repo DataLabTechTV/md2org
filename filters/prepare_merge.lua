@@ -11,6 +11,18 @@ local priority_map = {
   P9 = "[#K]",
 }
 
+-- TODO move to config.yaml
+local drop_filetags = {
+  clippings=true,
+  slides=true,
+  video=true,
+  ["video-content"]=true,
+  ["data-lab-tech"]=true
+}
+
+local filetags = {}
+local props = {}
+
 local function dir_as_title(s)
   local title = s:gsub("[-_]+", " ")
   title = title:gsub(
@@ -18,6 +30,38 @@ local function dir_as_title(s)
       return first:upper() .. rest:lower()
   end)
   return title
+end
+
+function RawBlock(rb)
+  if rb.format ~= "org" then
+    return nil
+  end
+
+  local title = rb.text:match("^#%+PROPERTY:%s*title%s*")
+  if title then
+    return {}
+  end
+
+  local prop, val = rb.text:match("^#%+PROPERTY:%s*(%S+)(.*)$")
+  if prop and val then
+    table.insert(
+      props,
+      ":" .. prop .. ": " .. val
+    )
+    return {}
+  end
+
+  local tags = rb.text:match("^#%+filetags:%s*(.+)$")
+  if tags then
+    for tag in tags:gmatch(":([^:]+)") do
+      if not drop_filetags[tag] then
+        table.insert(filetags, tag)
+      end
+    end
+    return {}
+  end
+
+  return nil
 end
 
 function Pandoc(doc)
@@ -82,8 +126,6 @@ function Pandoc(doc)
     end
   end
 
-  properties = nil
-
   if doc.meta.prefix_to_order then
     order, title = title:match("([0-9]+)[ -]*(.*)")
     order = tonumber(order)
@@ -102,13 +144,23 @@ function Pandoc(doc)
     table.insert(title_header.content, 1, todo)
   end
 
+  -- If there are filetags, move them to header tags
+  if #filetags > 0 then
+    table.insert(title_header.content, pandoc.Space())
+    table.insert(title_header.content, pandoc.Str(":" .. table.concat(filetags, ":") .. ":"))
+  end
+
   -- Insert the title heading
   table.insert(doc.blocks, n, pandoc.Para({}))
   table.insert(doc.blocks, n, title_header)
 
   -- Insert any optional properties
-  if properties then
-    table.insert(doc.blocks, n, properties)
+  if #props > 0 then
+    table.insert(props, 1, ":PROPERTIES:")
+    table.insert(props, ":END:")
+    props = table.concat(props, "\n")
+    print(props)
+    table.insert(doc.blocks, n+1, pandoc.RawBlock("org", props))
   end
 
   return doc
