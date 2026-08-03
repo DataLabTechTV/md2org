@@ -25,7 +25,8 @@ duckdb "$META_PATH" -c "
     pandoc -f markdown-auto_identifiers-citations -t org \
         --standalone \
         --wrap=preserve \
-        --metadata=title:{1} \
+        --metadata=doc_title:{1} \
+        --lua-filter=\"$FILTERS_DIR/add_properties.lua\" \
         --lua-filter=\"$FILTERS_DIR/fix_links.lua\" \
         {2} -o {3}
 "
