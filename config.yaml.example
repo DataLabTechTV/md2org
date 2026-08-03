@@ -8,12 +8,16 @@ remap:
         todo: IDEA
       - source: content-creation/data-lab-tech/01-planned/*.org
         todo: TODO
+        prefix_to_priority: true
       - source: content-creation/data-lab-tech/02-in-progress/*.org
         todo: STRT
+        prefix_to_order: true
       - source: content-creation/data-lab-tech/03-published/*.org
         todo: DONE
+        prefix_to_order: true
       - source: content-creation/data-lab-tech/90-on-hold/*.org
         todo: HOLD
+        prefix_to_priority: true
       - source: content-creation/data-lab-tech/99-abandoned/*.org
         todo: KILL
   - output: content/writing.org

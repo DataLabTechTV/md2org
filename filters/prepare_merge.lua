@@ -1,3 +1,16 @@
+local priority_map = {
+  P0 = "[#A]",
+  P1 = "[#B]",
+  P2 = "[#C]",
+  P3 = "[#E]",
+  P4 = "[#F]",
+  P5 = "[#G]",
+  P6 = "[#H]",
+  P7 = "[#I]",
+  P8 = "[#J]",
+  P9 = "[#K]",
+}
+
 local function dir_as_title(s)
   local title = s:gsub("[-_]+", " ")
   title = title:gsub(
@@ -54,12 +67,39 @@ function Pandoc(doc)
     table.insert(doc.blocks, i, path_header)
   end
 
-  -- Create a title header
+  -- Create a title header with optional prefix parsing
+
   local title = pandoc.utils.stringify(doc.meta.title or "")
   if title == "" then
     error("no title found")
   end
+  print("TITLE: " .. title)
+
+  if doc.meta.prefix_to_priority then
+    priority, title = title:match("(P[0-9]+)[ -]*(.*)")
+    priority = priority_map[priority]
+    print("TITLE (NO PRIORITY): " .. title)
+    if priority then
+      print("priority: " .. priority)
+      title = title .. " " .. priority
+      print("TITLE (ORG PRIORITY): " .. title)
+    end
+  end
+
+  properties = nil
+
+  if doc.meta.prefix_to_order then
+    order, title = title:match("([0-9]+)[ -]*(.*)")
+    order = tonumber(order)
+    print("TITLE (NO ORDER): " .. title)
+  end
+
   local title_header = pandoc.Header(n, title)
+
+  if order then
+    print("ORDER: " .. order)
+    title_header.attributes["Order"] = order
+  end
 
   -- If a todo keyword is specified, prefix the title header with it
   local todo = pandoc.utils.stringify(doc.meta.todo or "null")
@@ -71,6 +111,12 @@ function Pandoc(doc)
   -- Insert the title heading
   table.insert(doc.blocks, n, pandoc.Para({}))
   table.insert(doc.blocks, n, title_header)
+
+  -- Insert any optional properties
+  if properties then
+    print("INSERT PROPERTIES")
+    table.insert(doc.blocks, n, properties)
+  end
 
   return doc
 end

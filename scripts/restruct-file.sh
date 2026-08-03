@@ -17,10 +17,12 @@ usage() {
     echo "  OUTER_HEADING           optional outer heading to be added (ignored if 'null')"
     echo "  PATH_AS_HEADINGS        set status for convert directories along the path to headers [true/false]"
     echo "  PATH_AS_HEADINGS_ROOT   absolute path of the root directory to build headers from (ignored if 'null')"
+    echo "  PREFIX_TO_PRIORITY      filename prefixes (e.g., P0, P1) become org mode priorities (e.g., [#A], [#B])"
+    echo "  PREFIX_TO_ORDER         filename prefixes (e.g., 01, 02) become an org mode property (e.g., :Order: 1, :Order: 2)"
     exit 2
 }
 
-[ "$#" -ge 6 ] || usage
+[ "$#" -ge 8 ] || usage
 
 path=$1
 root=$2
@@ -28,6 +30,8 @@ todo=$3
 outer_heading=$4
 path_as_headings=$5
 path_as_headings_root=$6
+prefix_to_priority=$7
+prefix_to_order=$8
 
 log INFO "Retructuring '$path'..."
 
@@ -36,6 +40,8 @@ log DEBUG "todo: $todo"
 log DEBUG "outer_heading: $outer_heading"
 log DEBUG "path_as_headings: $path_as_headings"
 log DEBUG "path_as_headings_root: $path_as_headings_root"
+log DEBUG "prefix_to_priority: $prefix_to_priority"
+log DEBUG "prefix_to_order: $prefix_to_order"
 
 tmpfile=$(mktemp)
 
@@ -47,6 +53,8 @@ pandoc -f org-auto_identifiers -t org \
     --metadata="outer_heading:$outer_heading" \
     --metadata="path_as_headings:$path_as_headings" \
     --metadata="path_as_headings_root:$path_as_headings_root" \
+    --metadata="prefix_to_priority:$prefix_to_priority" \
+    --metadata="prefix_to_order:$prefix_to_order" \
     --lua-filter="$FILTERS_DIR/prepare_merge.lua" \
     "$path" -o "$tmpfile"
 

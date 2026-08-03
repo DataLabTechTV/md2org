@@ -25,6 +25,8 @@ for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
         outer_heading="$(yq "${input}.outer_heading" config.yaml)"
         todo="$(yq "${input}.todo" config.yaml)"
         path_as_headings="$(yq "${input}.path_as_headings // false" config.yaml)"
+        prefix_to_priority="$(yq "${input}.prefix_to_priority // false" config.yaml)"
+        prefix_to_order="$(yq "${input}.prefix_to_order // false" config.yaml)"
 
         path_as_headings_root="null"
         if [ "$path_as_headings" = "true" ]; then
@@ -35,9 +37,14 @@ for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
         source="$ORG_REMAPPED_DIR/$source"
         files=( $source )
 
-        printf "%s\t$ORG_REMAPPED_DIR\t$todo\t$outer_heading\t$path_as_headings\t$path_as_headings_root\n" \
-            "${files[@]}" |
-        parallel --colsep='\t' --jobs=-2 \
-            "$SCRIPT_DIR/restruct-file.sh \"{1}\" \"{2}\" \"{3}\" \"{4}\" \"{5}\" \"{6}\""
+        fmt="%s\t$ORG_REMAPPED_DIR\t$todo\t$outer_heading"
+        fmt+="\t$path_as_headings\t$path_as_headings_root"
+        fmt+="\t$prefix_to_priority\t$prefix_to_order\n"
+
+        printf "$fmt" "${files[@]}" |
+            parallel --colsep='\t' --jobs=-2 \
+                "$SCRIPT_DIR/restruct-file.sh \
+                \"{1}\" \"{2}\" \"{3}\" \"{4}\" \
+                \"{5}\" \"{6}\" \"{7}\" \"{8}\""
     done
 done
