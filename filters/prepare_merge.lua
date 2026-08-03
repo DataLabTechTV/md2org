@@ -73,16 +73,12 @@ function Pandoc(doc)
   if title == "" then
     error("no title found")
   end
-  print("TITLE: " .. title)
 
   if doc.meta.prefix_to_priority then
     priority, title = title:match("(P[0-9]+)[ -]*(.*)")
     priority = priority_map[priority]
-    print("TITLE (NO PRIORITY): " .. title)
     if priority then
-      print("priority: " .. priority)
       title = title .. " " .. priority
-      print("TITLE (ORG PRIORITY): " .. title)
     end
   end
 
@@ -91,13 +87,11 @@ function Pandoc(doc)
   if doc.meta.prefix_to_order then
     order, title = title:match("([0-9]+)[ -]*(.*)")
     order = tonumber(order)
-    print("TITLE (NO ORDER): " .. title)
   end
 
   local title_header = pandoc.Header(n, title)
 
   if order then
-    print("ORDER: " .. order)
     title_header.attributes["Order"] = order
   end
 
@@ -114,7 +108,6 @@ function Pandoc(doc)
 
   -- Insert any optional properties
   if properties then
-    print("INSERT PROPERTIES")
     table.insert(doc.blocks, n, properties)
   end
 
