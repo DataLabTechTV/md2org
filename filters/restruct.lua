@@ -41,10 +41,7 @@ function RawBlock(rb)
 
   local prop, val = rb.text:match("^#%+PROPERTY:%s*(%S+)(.*)$")
   if prop and val then
-    table.insert(
-      props,
-      ":" .. prop .. ": " .. val
-    )
+    table.insert(props, ":" .. prop .. ": " .. val)
     return {}
   end
 
