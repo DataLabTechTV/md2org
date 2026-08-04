@@ -11,15 +11,7 @@ local priority_map = {
   P9 = "[#K]",
 }
 
--- TODO move to config.yaml
-local drop_filetags = {
-  clippings=true,
-  slides=true,
-  video=true,
-  ["video-content"]=true,
-  ["data-lab-tech"]=true
-}
-
+local meta = {}
 local filetags = {}
 local props = {}
 
@@ -30,6 +22,11 @@ local function dir_as_title(s)
       return first:upper() .. rest:lower()
   end)
   return title
+end
+
+function Meta(m)
+  meta = m
+  return m
 end
 
 function RawBlock(rb)
@@ -54,7 +51,7 @@ function RawBlock(rb)
   local tags = rb.text:match("^#%+filetags:%s*(.+)$")
   if tags then
     for tag in tags:gmatch(":([^:]+)") do
-      if not drop_filetags[tag] then
+      if meta.ignore and meta.ignore.filetags and not meta.ignore.filetags[tag] then
         table.insert(filetags, tag)
       end
     end
@@ -159,7 +156,6 @@ function Pandoc(doc)
     table.insert(props, 1, ":PROPERTIES:")
     table.insert(props, ":END:")
     props = table.concat(props, "\n")
-    print(props)
     table.insert(doc.blocks, n+1, pandoc.RawBlock("org", props))
   end
 

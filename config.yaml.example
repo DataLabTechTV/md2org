@@ -1,3 +1,9 @@
+ignore:
+  filetags:
+    - clippings
+    - slides
+    - video
+    - video-content
 remap:
   - output: content/videos.org
     title: Videos

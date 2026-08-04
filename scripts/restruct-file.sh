@@ -43,7 +43,10 @@ log DEBUG "path_as_headings_root: $path_as_headings_root"
 log DEBUG "prefix_to_priority: $prefix_to_priority"
 log DEBUG "prefix_to_order: $prefix_to_order"
 
-tmpfile=$(mktemp)
+ignore_tmpfile=$(mktemp "/tmp/md2org-ignore.XXXXXXXXXX.yaml")
+yq '{"ignore": .ignore}' "$CONFIG_PATH" >"$ignore_tmpfile"
+
+tmpfile=$(mktemp "/tmp/md2org-restruct.org.XXXXXXXXXX")
 
 pandoc -f org-auto_identifiers -t org \
     --standalone \
@@ -55,7 +58,10 @@ pandoc -f org-auto_identifiers -t org \
     --metadata="path_as_headings_root:$path_as_headings_root" \
     --metadata="prefix_to_priority:$prefix_to_priority" \
     --metadata="prefix_to_order:$prefix_to_order" \
-    --lua-filter="$FILTERS_DIR/prepare_merge.lua" \
+    --metadata-file="$ignore_tmpfile" \
+    --lua-filter="$FILTERS_DIR/restruct.lua" \
     "$path" -o "$tmpfile"
 
 mv "$tmpfile" "$path"
+
+rm -fv "$ignore_tmpfile"
