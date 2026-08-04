@@ -17,7 +17,8 @@ for tidx in $(yq ".assets[] | path | .[-1]" "$CONFIG_PATH"); do
     mapfile -t root_dirs < <(printf '%s\n' "${root_dirs[@]/#/$ORG_REMAPPED_DIR/}")
 
     log INFO "Moving assets to target directory '$target_dir'..."
-    log DEBUG "Root directory: %s" "${root_dirs[@]}"
+    log DEBUG "Root directories: %s" "${root_dirs[*]}"
+    log DEBUG "Finding assets directories: $assets_dir"
 
     mkdir -pv "$target_dir"
 
