@@ -29,6 +29,11 @@ function Meta(m)
   return m
 end
 
+function Image(img)
+  img.src = "assets/" .. pandoc.path.filename(img.src)
+  return img
+end
+
 function RawBlock(rb)
   if rb.format ~= "org" then
     return nil
