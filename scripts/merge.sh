@@ -10,19 +10,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 shopt -s globstar nullglob
 
-log INFO "Merging org files according to 'config.yaml'..."
+log INFO "Merging org files according to '$CONFIG_PATH'..."
 
-for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
-    output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" config.yaml)"
-    title="$(yq ".remap[$oidx].title // \"Title\"" config.yaml)"
+for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
+    output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" "$CONFIG_PATH")"
+    title="$(yq ".remap[$oidx].title // \"Title\"" "$CONFIG_PATH")"
 
     log INFO "Merging sources into output '$output'..."
 
     srcs=()
 
-    for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
+    for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" "$CONFIG_PATH"); do
         input=".remap[$oidx].inputs[$iidx]"
-        source="$REL_ORG_REMAPPED_DIR/$(yq "${input}.source" config.yaml)"
+        source="$REL_ORG_REMAPPED_DIR/$(yq "${input}.source" "$CONFIG_PATH")"
         files=( $source )
         srcs+=( ${files[@]} )
     done

@@ -12,21 +12,21 @@ rsync -Praz --delete --exclude='.gitkeep' "$ORG_DIR/" "$ORG_REMAPPED_DIR/"
 
 shopt -s globstar nullglob
 
-log INFO "Restructuring org files according to 'config.yaml'..."
+log INFO "Restructuring org files according to '$CONFIG_PATH'..."
 
-for oidx in $(yq ".remap[] | path | .[-1]" config.yaml); do
-    output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" config.yaml)"
+for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
+    output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" "$CONFIG_PATH")"
     log DEBUG "Parsing sources for output '$output'..."
 
-    for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" config.yaml); do
+    for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" "$CONFIG_PATH"); do
         input=".remap[$oidx].inputs[$iidx]"
 
-        source="$(yq "${input}.source" config.yaml)"
-        outer_heading="$(yq "${input}.outer_heading" config.yaml)"
-        todo="$(yq "${input}.todo" config.yaml)"
-        path_as_headings="$(yq "${input}.path_as_headings // false" config.yaml)"
-        prefix_to_priority="$(yq "${input}.prefix_to_priority // false" config.yaml)"
-        prefix_to_order="$(yq "${input}.prefix_to_order // false" config.yaml)"
+        source="$(yq "${input}.source" "$CONFIG_PATH")"
+        outer_heading="$(yq "${input}.outer_heading" "$CONFIG_PATH")"
+        todo="$(yq "${input}.todo" "$CONFIG_PATH")"
+        path_as_headings="$(yq "${input}.path_as_headings // false" "$CONFIG_PATH")"
+        prefix_to_priority="$(yq "${input}.prefix_to_priority // false" "$CONFIG_PATH")"
+        prefix_to_order="$(yq "${input}.prefix_to_order // false" "$CONFIG_PATH")"
 
         path_as_headings_root="null"
         if [ "$path_as_headings" = "true" ]; then
