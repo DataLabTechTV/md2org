@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 . "$SCRIPT_DIR/lib/config.sh"
 . "$SCRIPT_DIR/lib/logging.sh"
-
+. "$SCRIPT_DIR/lib/image.sh"
 
 log INFO "Converting '*.excalidraw.md' to '*.excalidraw' and copying to 'diagrams/' directories..."
 duckdb "$META_PATH" "
@@ -31,10 +31,16 @@ duckdb "$META_PATH" -csv -noheader "
     WHERE ft = 'excalidraw';
 " | xargs mkdir -v -p
 
-log INFO "Moving '*.png' diagrams to the corresponding 'assets/' directories..."
+opt_remove_transparency="$(yq '.options.remove_transparency // false' "$CONFIG_PATH")"
+
+log INFO "Removing transparency and moving '*.png' diagrams to the corresponding 'assets/' directories..."
 find "$ORG_DIR" -name '*.excalidraw' -path '*/diagrams/*' -print0 |
     while IFS= read -r -d '' file; do
         src="${file%.excalidraw}.png"
+
+        if [ "$opt_remove_transparency" = "true" ]; then
+            remove_transparency "$src"
+        fi
 
         dst="${file%.excalidraw}.png"
         dst="${dst/\/diagrams\//\/assets\/}"
