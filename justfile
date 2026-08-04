@@ -83,6 +83,9 @@ convert: check
 remap: check
     ./scripts/restruct.sh
 
-    # TODO copy assets to the correct locations and delete unlinked assets
     # TODO convert links pointing to merged source files into links to the merged output section in pandoc-lua
+    # TODO make all assets point to ./assets/filename.ext
     ./scripts/merge.sh
+
+    # TODO move assets to the correct locations and prune empty folders
+    ./scripts/move-assets.sh
