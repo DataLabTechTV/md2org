@@ -71,6 +71,7 @@ sync-md src:
 # Convert from markdown to org files, including directory structure
 [group('build')]
 convert: check
+    ./scripts/check-md.sh
     ./scripts/map-paths.sh
     ./scripts/create-dirs.sh
     ./scripts/convert-to-org.sh
