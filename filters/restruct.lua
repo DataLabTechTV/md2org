@@ -11,7 +11,7 @@ local priority_map = {
   P9 = "[#K]",
 }
 
-local meta = {}
+local meta_ignore_filetags = {}
 local filetags = {}
 local props = {}
 
@@ -24,17 +24,18 @@ local function dir_as_title(s)
   return title
 end
 
-function Meta(m)
-  meta = m
+function process_meta(m)
+  if m.ignore and m.ignore.filetags then
+    for _, tag in ipairs(m.ignore.filetags) do
+      tag = pandoc.utils.stringify(tag)
+      meta_ignore_filetags[tag] = true
+    end
+  end
+
   return m
 end
 
-function Image(img)
-  img.src = "assets/" .. pandoc.path.filename(img.src)
-  return img
-end
-
-function RawBlock(rb)
+function process_raw_block(rb)
   if rb.format ~= "org" then
     return nil
   end
@@ -53,7 +54,7 @@ function RawBlock(rb)
   local tags = rb.text:match("^#%+filetags:%s*(.+)$")
   if tags then
     for tag in tags:gmatch(":([^:]+)") do
-      if meta.ignore and meta.ignore.filetags and not meta.ignore.filetags[tag] then
+      if not meta_ignore_filetags[tag] then
         table.insert(filetags, tag)
       end
     end
@@ -63,7 +64,16 @@ function RawBlock(rb)
   return nil
 end
 
+function Image(img)
+  img.src = "assets/" .. pandoc.path.filename(img.src)
+  return img
+end
+
 function Pandoc(doc)
+  -- Ensure that 'meta_ignore_filetags' is loaded before raw block processing
+  doc.meta = process_meta(doc.meta)
+  doc = doc:walk({ RawBlock = process_raw_block })
+
   -- Number of levels to add above source headings
   local n = 1
 
