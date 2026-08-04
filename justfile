@@ -87,5 +87,4 @@ remap: check
     # TODO make all assets point to ./assets/filename.ext
     ./scripts/merge.sh
 
-    # TODO move assets to the correct locations and prune empty folders
     ./scripts/move-assets.sh
