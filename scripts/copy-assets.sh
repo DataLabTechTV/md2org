@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log INFO "Copying assets from '$MD_DIR' to '$ORG_DIR'..."
 
 export -f log
-duckdb "$META_PATH" -c "
+duckdb "$META_PATH" "
     COPY (
         SELECT
             '$REL_MD_DIR/' || src,

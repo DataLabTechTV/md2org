@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 
 log INFO "Converting '*.excalidraw.md' to '*.excalidraw' and copying to 'diagrams/' directories..."
-duckdb "$META_PATH" -c "
+duckdb "$META_PATH" "
     COPY (
         SELECT
             '$REL_MD_DIR/' || src,
@@ -23,7 +23,7 @@ log INFO "Converting '*.excalidraw' to '*.png'..."
 "$SCRIPT_DIR/excalirender-wrapper.sh" "$ORG_DIR" --recursive --scale 3.0 .
 
 log INFO "Creating 'assets/' directories for '*.png' diagrams..."
-duckdb "$META_PATH" -csv -noheader -c "
+duckdb "$META_PATH" -csv -noheader "
     SELECT DISTINCT '$REL_ORG_DIR/' || dst.
         replace('/diagrams/', '/assets/').
         parse_dirpath()

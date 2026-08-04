@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 log INFO "Creating directory structure for org files..."
 
-duckdb "$META_PATH" -csv -noheader -c "
+duckdb "$META_PATH" -csv -noheader "
     SELECT DISTINCT '$REL_ORG_DIR/' || dst.parse_dirpath()
     FROM paths
     ORDER BY dst

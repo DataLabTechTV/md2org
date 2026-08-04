@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log INFO "Converting all markdown files into org files..."
 
 export -f log
-duckdb "$META_PATH" -c "
+duckdb "$META_PATH" "
     COPY (
         SELECT
             src.parse_filename().regexp_replace('\.md', '') AS title,
