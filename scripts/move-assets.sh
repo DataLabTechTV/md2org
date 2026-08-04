@@ -17,14 +17,13 @@ for tidx in $(yq ".assets[] | path | .[-1]" "$CONFIG_PATH"); do
     mapfile -t root_dirs < <(printf '%s\n' "${root_dirs[@]/#/$ORG_REMAPPED_DIR/}")
 
     log INFO "Moving assets to target directory '$target_dir'..."
-    log DEBUG "Searching for assets under root directories: ${#root_dirs[@]}"
+    log DEBUG "Root directory: %s" "${root_dirs[@]}"
 
     mkdir -pv "$target_dir"
 
     if (("${#root_dirs[@]}")); then
         mapfile -t assets_dirs < <(find "${root_dirs[@]}" -type d -name "$assets_dir")
-        printf '%s\n' "${assets_dirs[@]}"
-        # find "${assets_dirs[@]}" -type f -exec echo mv -v {} "$target_dir" \;
+        find "${assets_dirs[@]}" -type f -print0 | xargs -0 -I{} mv -v "{}" "$target_dir"
     fi
 done
 
