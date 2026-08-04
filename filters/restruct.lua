@@ -131,7 +131,7 @@ function Pandoc(doc)
   local title_header = pandoc.Header(n, title)
 
   if order then
-    title_header.attributes["Order"] = order
+    table.insert(props, ":order: " .. order)
   end
 
   -- If a todo keyword is specified, prefix the title header with it
