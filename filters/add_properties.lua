@@ -45,12 +45,16 @@ function Pandoc(doc)
         local tags = {}
 
         for _, tag in ipairs(doc.meta.tags) do
-          table.insert(tags, pandoc.utils.stringify(tag))
+          tag = pandoc.utils.stringify(tag)
+            :gsub("-", "_")
+          table.insert(tags, tag)
         end
 
         if doc.meta.research then
           for _, tag in ipairs(doc.meta.research) do
-            table.insert(tags, pandoc.utils.stringify(tag))
+            tag = pandoc.utils.stringify(tag)
+              :gsub("-", "_")
+            table.insert(tags, tag)
           end
           doc.meta.research = nil
         end

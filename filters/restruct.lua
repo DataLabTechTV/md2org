@@ -28,6 +28,7 @@ function process_meta(m)
   if m.ignore and m.ignore.filetags then
     for _, tag in ipairs(m.ignore.filetags) do
       tag = pandoc.utils.stringify(tag)
+        :gsub("-", "_")
       meta_ignore_filetags[tag] = true
     end
   end
