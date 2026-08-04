@@ -4,6 +4,8 @@ ignore:
     - slides
     - video
     - video-content
+  filetypes:
+    - base
 remap:
   - output: content/videos.org
     title: Videos

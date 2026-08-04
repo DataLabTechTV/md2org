@@ -54,3 +54,11 @@ duckdb "$META_PATH" "
         replace('-excalidraw.excalidraw', '.excalidraw')
     WHERE ft = 'excalidraw';
 "
+
+mapfile -t ignore_filetypes < <(yq '.ignore.filetypes[]' "$CONFIG_PATH")
+
+if (("${#ignore_filetypes[@]}")); then
+    log DEBUG "Ignore filetypes: %s" "${ignore_filetypes[*]}"
+    ft="$(printf "'%s', " "${ignore_filetypes[@]}" | sed 's/, $//')"
+    duckdb "$META_PATH" "DELETE FROM paths WHERE ft IN ($ft)"
+fi
