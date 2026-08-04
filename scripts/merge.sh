@@ -24,7 +24,7 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
         input=".remap[$oidx].inputs[$iidx]"
         source="$REL_ORG_REMAPPED_DIR/$(yq "${input}.source" "$CONFIG_PATH")"
         files=( $source )
-        srcs+=( ${files[@]} )
+        srcs+=( "${files[@]}" )
     done
 
     if [ "${#srcs[@]}" -eq 0 ]; then
