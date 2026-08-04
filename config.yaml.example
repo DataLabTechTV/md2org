@@ -38,3 +38,11 @@ remap:
     inputs:
       - source: data-science/**/*.org
         path_as_headings: true
+assets:
+  - target: content/assets/
+    roots:
+      - content-creation/
+      - slides/
+  - target: content/diagrams/
+    roots:
+      - content-creation/
