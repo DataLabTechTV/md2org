@@ -26,7 +26,7 @@ duckdb "$META_PATH" "
 " | parallel --colsep='\t' --jobs=-2 '
     cp -v {1} {2}
 
-    if [ "$opt_remove_transparency" = "true" ]; then
+    if [[ "$opt_remove_transparency" = "true" && "{2}" == *assets/* ]]; then
         remove_transparency {2}
     fi
 '
