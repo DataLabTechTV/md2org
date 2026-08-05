@@ -20,5 +20,5 @@ find "$ORG_DIR" -name '*.mmd' -path '*/diagrams/*' |
         dst="${dst/\/diagrams\//\/assets\/}"
 
         log DEBUG "Source: $src"
-        "$SCRIPT_DIR/mmdc-wrapper.sh" "$ORG_DIR" -q -s 3 -i "$src" -o "$dst"
+        "$SCRIPT_DIR/mmdc_wrapper.sh" "$ORG_DIR" -q -s 3 -i "$src" -o "$dst"
     '

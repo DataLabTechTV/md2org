@@ -43,7 +43,7 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
 
         printf "$fmt" "${files[@]}" |
             parallel --colsep='\t' --jobs=-2 \
-                "$SCRIPT_DIR/restruct-file.sh \
+                "$SCRIPT_DIR/restruct_file.sh \
                 \"{1}\" \"{2}\" \"{3}\" \"{4}\" \
                 \"{5}\" \"{6}\" \"{7}\" \"{8}\""
     done

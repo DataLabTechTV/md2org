@@ -71,13 +71,13 @@ sync-md src:
 # Convert from markdown to org files, including directory structure
 [group('build')]
 convert: check
-    ./scripts/check-md.sh
-    ./scripts/map-paths.sh
-    ./scripts/create-dirs.sh
-    ./scripts/convert-to-org.sh
-    ./scripts/convert-mermaid.sh
-    ./scripts/convert-excalidraw.sh
-    ./scripts/copy-assets.sh
+    ./scripts/check_md.sh
+    ./scripts/map_paths.sh
+    ./scripts/create_dirs.sh
+    ./scripts/convert_to_org.sh
+    ./scripts/convert_mermaid.sh
+    ./scripts/convert_excalidraw.sh
+    ./scripts/copy_assets.sh
 
 # Apply the rules on config.yaml to restructure and merge the converted org files
 [group('build')]
@@ -85,6 +85,7 @@ remap: check
     ./scripts/restruct.sh
 
     # TODO convert links pointing to merged source files into links to the merged output section in pandoc-lua
-    ./scripts/merge.sh
+    # ./scripts/remap_internal_links.sh
 
-    ./scripts/move-assets.sh
+    ./scripts/merge.sh
+    ./scripts/move_assets.sh

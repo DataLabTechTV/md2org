@@ -17,10 +17,10 @@ duckdb "$META_PATH" "
         FROM paths
         WHERE ft = 'excalidraw'
     ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
-" | parallel --colsep='\t' --jobs=-2 "$SCRIPT_DIR/excalidraw-md-to-native.sh"
+" | parallel --colsep='\t' --jobs=-2 "$SCRIPT_DIR/excalidraw_md_to_native.sh"
 
 log INFO "Converting '*.excalidraw' to '*.png'..."
-"$SCRIPT_DIR/excalirender-wrapper.sh" "$ORG_DIR" --recursive --scale 3.0 .
+"$SCRIPT_DIR/excalirender_wrapper.sh" "$ORG_DIR" --recursive --scale 3.0 .
 
 log INFO "Creating 'assets/' directories for '*.png' diagrams..."
 duckdb "$META_PATH" -csv -noheader "
