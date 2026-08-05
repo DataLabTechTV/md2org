@@ -7,6 +7,14 @@ remove_transparency() {
     fi
 
     path="$1"
+    ext="${path##*.}"
+    ext="${ext,,}"
+
+    if [ "$ext" != "png" ]; then
+        echo "remove_transparency: not a png, exiting..."
+        return 0
+    fi
+
     log INFO "Removing transparent background from '$path'..."
 
     tmpfile=$(mktemp "/tmp/md2org-remove-transparency.XXXXXXXXXX.png")
