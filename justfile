@@ -75,6 +75,7 @@ convert: check
     ./scripts/map-paths.sh
     ./scripts/create-dirs.sh
     ./scripts/convert-to-org.sh
+    ./scripts/convert-mermaid.sh
     ./scripts/convert-excalidraw.sh
     ./scripts/copy-assets.sh
 

@@ -9,6 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 log INFO "Converting all markdown files into org files..."
 
+export FILTERS_DIR
 export -f log
 duckdb "$META_PATH" "
     COPY (
@@ -20,13 +21,14 @@ duckdb "$META_PATH" "
         WHERE ft = 'md'
         ORDER BY dst
     ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
-" | parallel --colsep='\t' --jobs=-2 "
-    log DEBUG {2}\" -> \"{3}
+" | parallel --colsep='\t' --jobs=-2 '
+    log DEBUG {2}" -> "{3}
     pandoc -f markdown-auto_identifiers-citations -t org \
         --standalone \
         --wrap=preserve \
         --metadata=doc_title:{1} \
-        --lua-filter=\"$FILTERS_DIR/add_properties.lua\" \
-        --lua-filter=\"$FILTERS_DIR/fix_links.lua\" \
+        --lua-filter="$FILTERS_DIR/add_properties.lua" \
+        --lua-filter="$FILTERS_DIR/fix_links.lua" \
+        --lua-filter="$FILTERS_DIR/extract_mermaid.lua" \
         {2} -o {3}
-"
+'
