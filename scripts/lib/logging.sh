@@ -29,5 +29,5 @@ log() {
     msg="$1"
     shift
 
-    printf "$(tput setaf $color)$prefix $msg$(tput sgr0)\n" "$@"
+    printf "$(tput setaf $color)$prefix $msg$(tput sgr0)\n" "$@" >&2
 }
