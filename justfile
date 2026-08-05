@@ -87,5 +87,5 @@ remap: check
     # TODO convert links pointing to merged source files into links to the merged output section in pandoc-lua
     # ./scripts/remap_internal_links.sh
 
-    ./scripts/merge.sh
-    ./scripts/move_assets.sh
+    # ./scripts/merge.sh
+    # ./scripts/move_assets.sh
