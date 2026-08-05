@@ -23,10 +23,10 @@ duckdb "$META_PATH" "
         WHERE ft NOT IN ('md', 'excalidraw')
         ORDER BY dst
     ) TO '/dev/stdout' (FORMAT CSV, DELIMITER '\t', QUOTE '', HEADER false)
-" | parallel --colsep='\t' --jobs=-2 "
+" | parallel --colsep='\t' --jobs=-2 '
     cp -v {1} {2}
 
-    if [ \"$opt_remove_transparency\" = \"true\" ]; then
+    if [ "$opt_remove_transparency" = "true" ]; then
         remove_transparency {2}
     fi
-"
+'
