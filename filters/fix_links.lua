@@ -81,6 +81,11 @@ function Link(link)
 end
 
 function Image(img)
+  if img.src:match(".*%.excalidraw.md$") then
+    img.src = img.src:gsub("%.excalidraw%.md$", ".png")
+  end
+
   img.src = to_normalized_path(img.src):gsub("attachments/", "assets/")
+
   return img
 end
