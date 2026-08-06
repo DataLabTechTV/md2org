@@ -17,3 +17,5 @@ REL_ORG_REMAPPED_DIR="$(realpath --relative-to="$BASE_DIR" "$ORG_REMAPPED_DIR")"
 
 CONFIG_PATH="$BASE_DIR/config.yaml"
 META_PATH="$DATA_DIR/meta.duckdb"
+REL_CONFIG_PATH="$(realpath --relative-to="$BASE_DIR" "$CONFIG_PATH")"
+REL_META_PATH="$(realpath --relative-to="$BASE_DIR" "$META_PATH")"

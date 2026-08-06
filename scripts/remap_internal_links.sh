@@ -30,17 +30,47 @@ find "$ORG_REMAPPED_DIR" -name '*.org' -print0 |
 
 # TODO load config.yaml and use remap sources to map links to the corresponding output
 
-log DEBUG "Ingesting '$CONFIG_PATH' into '$META_PATH' as 'config'"
+log DEBUG "Ingesting '$REL_CONFIG_PATH' into '$REL_META_PATH' as table 'config'"
 
 duckdb "$META_PATH" -c "
     INSTALL yaml FROM community;
     LOAD yaml;
+
     CREATE OR REPLACE TABLE config AS (
         SELECT output, title, unnest(inputs, recursive := true)
         FROM (SELECT unnest(remap, recursive := true) FROM 'config.yaml'));
 "
 
 # TODO produce a dictionary of links per file based on the meta.duckdb
-# select output, "source", "source".replace('**', '(?:[^/]+/)*').replace('*', '[^/]*').replace('.', '\.') as source_regex from config
+
+log DEBUG "Adding 'source_regex' column to the 'config' table"
+
+duckdb "$META_PATH"  "
+    ALTER TABLE config ADD COLUMN source_regex VARCHAR;
+
+    UPDATE config
+    SET source_regex = source.
+        replace('**', '(?:[^/]+/)*').
+        replace('*', '[^/]*').
+        replace('.', '\.');
+"
+
+log DEBUG "Creating 'link_remaps' table"
+
+duckdb "$META_PATH" "
+    CREATE OR REPLACE TABLE link_remaps AS (
+        SELECT
+            link,
+            output AS remap,
+            abs_path
+        FROM (
+            SELECT *, regexp_matches(abs_path, source_regex) AS is_match
+            FROM config, links
+            WHERE is_match
+        )
+    );
+"
+
+# TODO add original title for linked sources to the link_remaps table
 
 # TODO pass the dictionary as metadata to pandoc and rewrite the links
