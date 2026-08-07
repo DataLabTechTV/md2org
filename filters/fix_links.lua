@@ -86,20 +86,24 @@ function Link(link)
 end
 
 function Image(img)
-  if not img.src:match(".*%.(png|gif|jpg|jpeg)$") then
+  if not (img.src:match("%.png$") or
+          img.src:match("%.gif$") or
+          img.src:match("%.jpg$") or
+          img.src:match("%.jpeg$") or
+          img.src:match("%.excalidraw%.md$")) then
     return pandoc.Link(
       pandoc.path.filename(img.src),
-      "file:" .. to_normalized_path(img.src):gsub("attachments/", "assets/"),
+      "file:" .. to_normalized_path(img.src):gsub("Attachments/", "assets/"),
       img.title,
       img.attr
     )
   end
 
-  if img.src:match(".*%.excalidraw.md$") then
+  if img.src:match("%.excalidraw.md$") then
     img.src = img.src:gsub("%.excalidraw%.md$", ".png")
   end
 
-  img.src = to_normalized_path(img.src):gsub("attachments/", "assets/")
+  img.src = to_normalized_path(img.src):gsub("Attachments/", "assets/")
 
   return img
 end
