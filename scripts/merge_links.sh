@@ -80,7 +80,7 @@ log DEBUG "Creating 'merged_links' dictionary table..."
 duckdb "$META_PATH" "
     CREATE OR REPLACE TABLE merged_links AS (
         WITH matches AS (
-            SELECT
+            SELECT DISTINCT
                 *,
                 regexp_matches(abs_path, source_regex)
                     AND (
@@ -111,9 +111,11 @@ duckdb "$META_PATH" -csv -noheader "SELECT DISTINCT unmerged_path FROM merged_li
         "$ORG_REMAPPED_DIR/{}" -o /dev/null \
         2>/dev/null >"$custom_ids_tmpfile"
 
+duckdb "$META_PATH" "ALTER TABLE merged_links ADD COLUMN custom_id VARCHAR"
+
 duckdb "$META_PATH" "
     UPDATE merged_links
-    SET merged_link = merged_link || '::#' || t.custom_id
+    SET custom_id = t.custom_id
     FROM (
         SELECT * FROM read_csv_auto(
             '$custom_ids_tmpfile',
@@ -130,4 +132,18 @@ duckdb "$META_PATH" "
 
 rm -fv "$custom_ids_tmpfile"
 
-# TODO produce a YAML dictionary to pass as metadata to pandoc so it can rewrite the links
+log DEBUG "Writing JSON merged links dictionary to '$output'..."
+
+duckdb "$META_PATH" -c "
+    COPY (
+        SELECT
+            json_group_object(
+                unmerged_link,
+                json_object(
+                    'merged_link', merged_link,
+                    'custom_id', custom_id
+                )
+            ) AS merged_links
+        FROM merged_links
+    ) TO '$output' (FORMAT json);
+"

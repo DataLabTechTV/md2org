@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/logging.sh"
 . "$SCRIPT_DIR/lib/fs.sh"
 
-dict_tmpfile=$(mktemp "/tmp/md2org-merged_links.XXXXXXXXXX.yaml")
+dict_tmpfile=$(mktemp "/tmp/md2org-merged_links.XXXXXXXXXX.json")
 "$SCRIPT_DIR/merge_links.sh" "$dict_tmpfile"
 
 shopt -s globstar nullglob
@@ -44,6 +44,8 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
         --standalone \
         --wrap="preserve" \
         --metadata="title=$title" \
+        --metadata="base_dir:$BASE_DIR" \
+        --metadata="org_remapped_dir:$ORG_REMAPPED_DIR" \
         --metadata-file="$dict_tmpfile" \
         --lua-filter="$FILTERS_DIR/merge.lua" \
         "${srcs[@]}" \

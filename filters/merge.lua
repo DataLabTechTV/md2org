@@ -1,3 +1,7 @@
+local output_dir = nil
+local org_remapped_dir = nil
+local merged_links = nil
+
 local function header_key(stack, h)
   local parts = {}
 
@@ -10,7 +14,32 @@ local function header_key(stack, h)
   return table.concat(parts, "/")
 end
 
+function process_meta(m)
+  org_remapped_dir = m.org_remapped_dir
+  merged_links = m.merged_links
+  return m
+end
+
+function process_link(link)
+  if merged_links[link.target] then
+    local merged_link = pandoc.utils.stringify(merged_links[link.target].merged_link)
+    local custom_id = pandoc.utils.stringify(merged_links[link.target].custom_id)
+    merged_link = pandoc.path.join({ org_remapped_dir, merged_link })
+    link.target = "file:" .. pandoc.path.make_relative(merged_link, output_dir, true) .. '::#' .. custom_id
+  end
+
+  return link
+end
+
 function Pandoc(doc)
+  -- Ensure that 'merged_links' and 'output_dir' are set before Link processing
+  doc.meta = process_meta(doc.meta)
+  output_dir = pandoc.path.join({
+      pandoc.system.get_working_directory(),
+      pandoc.path.directory(PANDOC_STATE.output_file)
+  })
+  doc = doc:walk({ Link = process_link })
+
   local sections = {}
   local order = pandoc.List:new()
 
