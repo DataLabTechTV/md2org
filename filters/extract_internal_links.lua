@@ -24,7 +24,10 @@ function to_relative(path)
 end
 
 function process_link(link)
-  if link.target:match("^https?://") or link.target:match("^*") or link.target:match(".*assets/.*") then
+  if link.target:match("^https?://")
+    or link.target:match("^*")
+    or link.target:match(".*(assets|diagrams)/.*") then
+
     return link
   end
 

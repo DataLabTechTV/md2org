@@ -8,6 +8,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 . "$SCRIPT_DIR/lib/logging.sh"
 . "$SCRIPT_DIR/lib/fs.sh"
 
+dict_tmpfile=$(mktemp "/tmp/md2org-merged_links.XXXXXXXXXX.yaml")
+"$SCRIPT_DIR/merge_links.sh" "$dict_tmpfile"
+
 shopt -s globstar nullglob
 
 log INFO "Merging org files according to '$CONFIG_PATH'..."
@@ -41,6 +44,7 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
         --standalone \
         --wrap="preserve" \
         --metadata="title=$title" \
+        --metadata-file="$dict_tmpfile" \
         --lua-filter="$FILTERS_DIR/merge.lua" \
         "${srcs[@]}" \
         -o "$output"
@@ -49,3 +53,5 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
     rm -v -- "${srcs[@]}"
     prune_empty_dirs "$ORG_REMAPPED_DIR"
 done
+
+rm -fv "$dict_tmpfile"

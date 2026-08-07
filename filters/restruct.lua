@@ -121,30 +121,42 @@ function Pandoc(doc)
     table.insert(doc.blocks, i, path_header)
   end
 
-  -- Create a title header with optional prefix parsing
+  -- Create a title header with optional prefix parsing and a custom_id
 
   local title = pandoc.utils.stringify(doc.meta.title or "")
   if title == "" then
     error("no title found")
   end
 
+  local custom_id, _ = pandoc.path.split_extension(pandoc.path.filename(PANDOC_STATE.input_files[1]))
+
   if doc.meta.prefix_to_priority then
-    priority, title = title:match("(P[0-9]+)[ -]*(.*)")
+    local priority_regex = "([Pp][0-9]+)[ -]*(.*)"
+
+    priority, title = title:match(priority_regex)
     priority = priority_map[priority]
+
     if priority then
       title = title .. " " .. priority
     end
+
+    _, custom_id = custom_id:match(priority_regex)
   end
 
   if doc.meta.prefix_to_order then
-    order, title = title:match("([0-9]+)[ -]*(.*)")
+    local order_regex = "([0-9]+)[ -]*(.*)"
+
+    order, title = title:match(order_regex)
     order = tonumber(order)
+
+    _, custom_id = custom_id:match(order_regex)
   end
 
   local title_header = pandoc.Header(n, title)
 
-  local custom_id, _ = pandoc.path.split_extension(pandoc.path.filename(PANDOC_STATE.input_files[1]))
-  table.insert(props, ':custom_id: ' .. custom_id)
+  if custom_id and custom_id ~= "" then
+    table.insert(props, ':custom_id: ' .. custom_id)
+  end
 
   if order then
     table.insert(props, ":order: " .. order)

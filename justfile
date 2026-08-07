@@ -47,13 +47,18 @@ check:
     just _check magick
     just _check go-lz-string || echo "Install with: go install github.com/daku10/go-lz-string/cmd/go-lz-string@v0.0.7"
 
-# Delete output (data/to-org/)
+# Delete dangling temporary files (/tmp/md2org-*)
 [group('build')]
-clean:
+clean-tmp:
+    rm -rfv /tmp/md2org-*
+
+# Delete output (data/org/, data/org-remapped)
+[group('build')]
+clean: clean-tmp
     find data/org/ data/org-remapped/ -mindepth 1 ! -name .gitkeep -exec rm -rfv {} +
     rm -fv data/meta.duckdb
 
-# Delete input (data/from-md/) and output (data/to-org/)
+# Delete both input and output (data/md/, data/org/, data/org-remapped/)
 [group('build')]
 dist-clean: clean
     find data/md/ -mindepth 1 ! -name .gitkeep -exec rm -rfv {} +
@@ -83,9 +88,5 @@ convert: check
 [group('build')]
 remap: check
     ./scripts/restruct.sh
-
-    # TODO convert links pointing to merged source files into links to the merged output section in pandoc-lua
-    # ./scripts/remap_internal_links.sh
-
-    # ./scripts/merge.sh
-    # ./scripts/move_assets.sh
+    ./scripts/merge.sh
+    ./scripts/move_assets.sh
