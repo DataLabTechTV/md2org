@@ -143,6 +143,9 @@ function Pandoc(doc)
 
   local title_header = pandoc.Header(n, title)
 
+  local custom_id, _ = pandoc.path.split_extension(pandoc.path.filename(PANDOC_STATE.input_files[1]))
+  table.insert(props, ':custom_id: ' .. custom_id)
+
   if order then
     table.insert(props, ":order: " .. order)
   end
