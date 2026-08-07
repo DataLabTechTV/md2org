@@ -9,8 +9,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 log INFO "Remapping internal links in preparation for merge..."
 
+log DEBUG "Extracting links using pandoc"
+
 find "$ORG_REMAPPED_DIR" -name '*.org' -print0 |
-    parallel -0 pandoc -f org -t org \
+    parallel -0 pandoc -f org-auto_identifiers -t org \
         --metadata="org_remapped_dir:$ORG_REMAPPED_DIR" \
         --lua-filter="$FILTERS_DIR/extract_internal_links.lua" \
         "{}" -o /dev/null |
@@ -37,7 +39,7 @@ duckdb "$META_PATH" -c "
     LOAD yaml;
 
     CREATE OR REPLACE TABLE config AS (
-        SELECT output, title, unnest(inputs, recursive := true)
+        SELECT output, title, unnest(inputs, recursive := true), excludes
         FROM (SELECT unnest(remap, recursive := true) FROM 'config.yaml'));
 "
 
@@ -47,27 +49,37 @@ log DEBUG "Adding 'source_regex' column to the 'config' table"
 
 duckdb "$META_PATH"  "
     ALTER TABLE config ADD COLUMN source_regex VARCHAR;
+    ALTER TABLE config ADD COLUMN excludes_regex VARCHAR;
 
     UPDATE config
     SET source_regex = source.
-        replace('**', '(?:[^/]+/)*').
-        replace('*', '[^/]*').
-        replace('.', '\.');
+            replace('**', '(?:[^/]+/)*').
+            replace('*', '[^/]*').
+            replace('.', '\.'),
+        excludes_regex = array_to_string(excludes, '|').
+            replace('**', '(?:[^/]+/)*').
+            replace('*', '[^/]*').
+            replace('.', '\.');
 "
 
 log DEBUG "Creating 'link_remaps' table"
 
 duckdb "$META_PATH" "
     CREATE OR REPLACE TABLE link_remaps AS (
-        SELECT
-            link,
-            output AS remap,
-            abs_path
-        FROM (
-            SELECT *, regexp_matches(abs_path, source_regex) AS is_match
+        WITH matches AS (
+            SELECT
+                *,
+                regexp_matches(abs_path, source_regex)
+                    AND (
+                        excludes_regex IS NULL
+                        OR NOT regexp_matches(abs_path, excludes_regex)
+                     )
+                    AS is_match
             FROM config, links
             WHERE is_match
         )
+        SELECT link, output AS remap, abs_path
+        FROM matches
     );
 "
 
