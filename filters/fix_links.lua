@@ -56,6 +56,13 @@ local function to_normalized_path(path, ft)
 end
 
 function Link(link)
+  -- Strip problematic characters
+  local content = pandoc.utils.stringify(link.content)
+  print("BEFORE: " .. content)
+  content = content:gsub("[%[%]]", "")
+  link.content = content
+  print("AFTER: " .. content)
+
   -- Regular web links should remain unaltered
   if link.target:match("^https?://") then
     return link
