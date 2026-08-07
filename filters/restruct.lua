@@ -41,10 +41,10 @@ function process_raw_block(rb)
     return nil
   end
 
-  local title = rb.text:match("^#%+PROPERTY:%s*title%s*")
-  if title then
-    return {}
-  end
+  -- local title = rb.text:match("^#%+PROPERTY:%s*title%s*")
+  -- if title then
+  --   return {}
+  -- end
 
   local prop, val = rb.text:match("^#%+PROPERTY:%s*(%S+)(.*)$")
   if prop and val then
@@ -128,6 +128,10 @@ function Pandoc(doc)
     error("no title found")
   end
 
+  print("BEFORE TITLE (HEADER): " .. title)
+
+  -- FIXME one of these regex is causing issues for some titles
+
   local custom_id, _ = pandoc.path.split_extension(pandoc.path.filename(PANDOC_STATE.input_files[1]))
 
   if doc.meta.prefix_to_priority then
@@ -152,6 +156,7 @@ function Pandoc(doc)
     _, custom_id = custom_id:match(order_regex)
   end
 
+  print("TITLE (HEADER): " .. title)
   local title_header = pandoc.Header(n, title)
 
   if custom_id and custom_id ~= "" then

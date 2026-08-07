@@ -35,7 +35,13 @@ function Pandoc(doc)
   for _, prop in ipairs(prop_order) do
     if doc.meta[prop] then
       if prop == "doc_title" then
-        doc.meta.title = doc.meta[prop]
+        if doc.meta.title then
+          doc.meta.title = pandoc.utils.stringify(doc.meta.title)
+          print("TITLE: " .. doc.meta.title)
+        else
+          doc.meta.title = doc.meta[prop]
+          print("DOC TITLE: " .. doc.meta.title)
+        end
 
       elseif prop == "author" then
         insert_prop(doc, prop, doc.meta[prop])
