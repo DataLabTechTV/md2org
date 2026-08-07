@@ -41,11 +41,6 @@ function process_raw_block(rb)
     return nil
   end
 
-  -- local title = rb.text:match("^#%+PROPERTY:%s*title%s*")
-  -- if title then
-  --   return {}
-  -- end
-
   local prop, val = rb.text:match("^#%+PROPERTY:%s*(%S+)(.*)$")
   if prop and val then
     table.insert(props, ":" .. prop .. ": " .. val)
@@ -87,17 +82,25 @@ function Pandoc(doc)
   end
 
   -- Create path headers, if the option is set, and update n
+
   local path_headers = {}
   local root = pandoc.utils.stringify(doc.meta.root or "null")
   local path_as_headings_root = pandoc.utils.stringify(doc.meta.path_as_headings_root or "null")
+
   if root ~= "null" and path_as_headings_root ~= "null" then
     local root = pandoc.path.join({ root, path_as_headings_root })
     local dirname = pandoc.path.directory(pandoc.path.make_relative(PANDOC_STATE.input_files[1], root))
-    local parts = pandoc.path.split(dirname)
-    for i, part in ipairs(parts) do
-      local path_header = pandoc.Header(i+n-1, dir_as_title(part))
-      path_headers[#path_headers + 1] = path_header
+    local parts = {}
+
+    if dirname ~= "." then
+      parts = pandoc.path.split(dirname)
+
+      for i, part in ipairs(parts) do
+        local path_header = pandoc.Header(i+n-1, dir_as_title(part))
+        table.insert(path_headers, path_header)
+      end
     end
+
     n = n + #parts
   end
 
@@ -128,43 +131,40 @@ function Pandoc(doc)
     error("no title found")
   end
 
-  print("BEFORE TITLE (HEADER): " .. title)
-
-  -- FIXME one of these regex is causing issues for some titles
-
-  local custom_id, _ = pandoc.path.split_extension(pandoc.path.filename(PANDOC_STATE.input_files[1]))
+  local custom_id, _ = pandoc.path.split_extension(
+    pandoc.path.filename(PANDOC_STATE.input_files[1]))
 
   if doc.meta.prefix_to_priority then
-    local priority_regex = "([Pp][0-9]+)[ -]*(.*)"
+    local priority_regex = "^([Pp][0-9]+)[ -]*(.*)"
 
-    priority, title = title:match(priority_regex)
+    priority, real_title = title:match(priority_regex)
     priority = priority_map[priority]
 
     if priority then
-      title = title .. " " .. priority
+      title = real_title .. " " .. priority
     end
 
     _, custom_id = custom_id:match(priority_regex)
   end
 
   if doc.meta.prefix_to_order then
-    local order_regex = "([0-9]+)[ -]*(.*)"
+    local order_regex = "^([0-9]+)[ -]*(.*)"
 
-    order, title = title:match(order_regex)
+    order, real_title = title:match(order_regex)
     order = tonumber(order)
+
+    if order then
+      title = real_title
+      table.insert(props, ":order: " .. order)
+    end
 
     _, custom_id = custom_id:match(order_regex)
   end
 
-  print("TITLE (HEADER): " .. title)
   local title_header = pandoc.Header(n, title)
 
   if custom_id and custom_id ~= "" then
-    table.insert(props, ':custom_id: ' .. custom_id)
-  end
-
-  if order then
-    table.insert(props, ":order: " .. order)
+    table.insert(props, 1, ':custom_id: ' .. custom_id)
   end
 
   -- If a todo keyword is specified, prefix the title header with it

@@ -32,15 +32,17 @@ local function insert_prop(doc, prop, val)
 end
 
 function Pandoc(doc)
+  local title
+
   for _, prop in ipairs(prop_order) do
     if doc.meta[prop] then
       if prop == "doc_title" then
-        if doc.meta.title then
-          doc.meta.title = pandoc.utils.stringify(doc.meta.title)
-          print("TITLE: " .. doc.meta.title)
-        else
-          doc.meta.title = doc.meta[prop]
-          print("DOC TITLE: " .. doc.meta.title)
+        title = pandoc.utils.stringify(doc.meta.title or "")
+        doc.meta.title = doc.meta[prop]
+
+      elseif prop == "title" then
+        if title ~= "" then
+          insert_prop(doc, "title", title)
         end
 
       elseif prop == "author" then
