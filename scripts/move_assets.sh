@@ -11,9 +11,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 log INFO "Finding and moving assets according to '$CONFIG_PATH'..."
 
 for tidx in $(yq ".assets[] | path | .[-1]" "$CONFIG_PATH"); do
-    target_dir="$ORG_REMAPPED_DIR/$(yq .assets[$tidx].target "$CONFIG_PATH")"
+    target_dir="$ORG_REMAPPED_DIR/$(yq .assets["$tidx"].target "$CONFIG_PATH")"
     assets_dir="$(basename "$target_dir")"
-    mapfile -t root_dirs < <(yq .assets[$tidx].roots[] "$CONFIG_PATH")
+    mapfile -t root_dirs < <(yq .assets["$tidx"].roots[] "$CONFIG_PATH")
     mapfile -t root_dirs < <(printf '%s\n' "${root_dirs[@]/#/$ORG_REMAPPED_DIR/}")
 
     log INFO "Moving assets to target directory '$target_dir'..."
@@ -24,7 +24,10 @@ for tidx in $(yq ".assets[] | path | .[-1]" "$CONFIG_PATH"); do
 
     if (("${#root_dirs[@]}")); then
         mapfile -t assets_dirs < <(find "${root_dirs[@]}" -type d -name "$assets_dir")
-        find "${assets_dirs[@]}" -type f -print0 | xargs -0 -I{} mv -v "{}" "$target_dir"
+
+        if (("${#assets_dirs[@]}")); then
+            find "${assets_dirs[@]}" -type f -print0 | xargs -0 -I{} mv -v "{}" "$target_dir"
+        fi
     fi
 done
 
