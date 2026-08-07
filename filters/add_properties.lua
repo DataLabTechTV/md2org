@@ -24,7 +24,7 @@ local function insert_prop(doc, prop, val)
     pandoc.RawBlock(
       "org",
       "#+PROPERTY: " .. string.lower(prop) .. " " ..
-      pandoc.utils.stringify(doc.meta[prop])
+      pandoc.utils.stringify(val)
     )
   )
 
