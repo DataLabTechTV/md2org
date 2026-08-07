@@ -18,6 +18,12 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
     output="$REL_ORG_REMAPPED_DIR/$(yq ".remap[$oidx].output" "$CONFIG_PATH")"
     log DEBUG "Parsing sources for output '$output'..."
 
+    mapfile -t excludes < <(yq ".remap[$oidx].excludes[]" "$CONFIG_PATH")
+    if (("${#excludes[@]}")); then
+        mapfile -t excludes < <(printf '%s\n' "${excludes[@]/#/$ORG_REMAPPED_DIR/}")
+        exclude_files=( $excludes )
+    fi
+
     for iidx in $(yq ".remap[$oidx].inputs[] | path | .[-1]" "$CONFIG_PATH"); do
         input=".remap[$oidx].inputs[$iidx]"
 
@@ -36,6 +42,9 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
 
         source="$ORG_REMAPPED_DIR/$source"
         files=( $source )
+        mapfile -t files < <(comm -23 \
+            <(printf '%s\n' "${files[@]}" | sort) \
+            <(printf '%s\n' "${exclude_files[@]}" | sort))
 
         fmt="%s\t$ORG_REMAPPED_DIR\t$todo\t$outer_heading"
         fmt+="\t$path_as_headings\t$path_as_headings_root"
