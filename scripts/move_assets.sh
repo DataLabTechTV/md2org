@@ -37,7 +37,9 @@ for tidx in $(yq ".assets[] | path | .[-1]" "$CONFIG_PATH"); do
             for exclude_path in "${exclude_paths[@]}"; do
                 exclude_find_args+=( ! -path "*${exclude_path}*" )
             done
-            find "${assets_dirs[@]}" -type f "${exclude_find_args[@]}" -print0 | xargs -0 -I{} mv -v "{}" "$target_dir"
+
+            find "${assets_dirs[@]}" -type f "${exclude_find_args[@]}" -print0 |
+                xargs -0 -I{} mv -v "{}" "$target_dir"
         fi
     fi
 done
