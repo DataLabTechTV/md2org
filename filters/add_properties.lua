@@ -67,12 +67,17 @@ function Pandoc(doc)
           doc.meta.research = nil
         end
 
+        local filetags = ""
+        if #tags > 0 then
+          filetags = " :" .. table.concat(tags, ":") .. ":"
+        end
+
         table.insert(
           doc.blocks,
           idx,
           pandoc.RawBlock(
             "org",
-            "#+filetags: :" .. table.concat(tags, ":") .. ":"
+            "#+filetags:" .. filetags
           )
         )
 
