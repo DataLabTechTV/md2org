@@ -60,18 +60,23 @@ duckdb "$META_PATH" -c "
 
 log DEBUG "Adding 'source_regex' and 'excludes_regex' columns to the 'config' table..."
 
+glob_regex='[^/]+'
+globstar_regex='(?:[^/]+/)*'
+
 duckdb "$META_PATH"  "
     ALTER TABLE config ADD COLUMN source_regex VARCHAR;
     ALTER TABLE config ADD COLUMN excludes_regex VARCHAR;
 
     UPDATE config
     SET source_regex = source.
-            replace('**', '(?:[^/]+/)*').
-            replace('*', '[^/]*').
+            replace('**/', '__GLOBSTAR__').
+            replace('*', '$glob_regex').
+            replace('__GLOBSTAR__', '$globstar_regex').
             replace('.', '\.'),
         excludes_regex = array_to_string(excludes, '|').
-            replace('**', '(?:[^/]+/)*').
-            replace('*', '[^/]*').
+            replace('**/', '__GLOBSTAR__').
+            replace('*', '$glob_regex').
+            replace('__GLOBSTAR__', '$globstar_regex').
             replace('.', '\.');
 "
 
@@ -99,19 +104,21 @@ duckdb "$META_PATH" "
     );
 "
 
-# TODO add custom_id for linked sources to the merged_links table
-
-log DEBUG "Extracting 'custom_id' from merged link targets and adding to 'merged_links' table..."
+log DEBUG "Extracting 'custom_id' from merged link targets..."
 
 custom_ids_tmpfile=$(mktemp "/tmp/md2org-custom_ids.XXXXXXXXXX")
+
 duckdb "$META_PATH" -csv -noheader "SELECT DISTINCT unmerged_path FROM merged_links" |
     parallel pandoc -f org-auto_identifiers -t org \
         --metadata="org_remapped_dir:$ORG_REMAPPED_DIR" \
         --lua-filter="$FILTERS_DIR/extract_custom_id.lua" \
         "$ORG_REMAPPED_DIR/{}" -o /dev/null \
-        2>/dev/null >"$custom_ids_tmpfile"
+        >"$custom_ids_tmpfile"
 
+log DEBUG "Creating 'custom_id' column..."
 duckdb "$META_PATH" "ALTER TABLE merged_links ADD COLUMN custom_id VARCHAR"
+
+log DEBUG "Updating 'custom_id' column in 'merged_links' table..."
 
 duckdb "$META_PATH" "
     UPDATE merged_links
