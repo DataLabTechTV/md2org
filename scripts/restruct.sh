@@ -33,6 +33,7 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
         path_as_headings="$(yq "${input}.path_as_headings // false" "$CONFIG_PATH")"
         prefix_to_priority="$(yq "${input}.prefix_to_priority // false" "$CONFIG_PATH")"
         prefix_to_order="$(yq "${input}.prefix_to_order // false" "$CONFIG_PATH")"
+        filename_as_date="$(yq "${input}.filename_as_date // false" "$CONFIG_PATH")"
 
         path_as_headings_root="null"
         if [ "$path_as_headings" = "true" ]; then
@@ -48,13 +49,15 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
 
         fmt="%s\t$ORG_REMAPPED_DIR\t$todo\t$outer_heading"
         fmt+="\t$path_as_headings\t$path_as_headings_root"
-        fmt+="\t$prefix_to_priority\t$prefix_to_order\n"
+        fmt+="\t$prefix_to_priority\t$prefix_to_order"
+        fmt+="\t$filename_as_date\n"
 
         printf "$fmt" "${files[@]}" |
             parallel --colsep='\t' --jobs=-2 \
                 "$SCRIPT_DIR/restruct_file.sh \
                 \"{1}\" \"{2}\" \"{3}\" \"{4}\" \
-                \"{5}\" \"{6}\" \"{7}\" \"{8}\""
+                \"{5}\" \"{6}\" \"{7}\" \"{8}\" \
+                \"{9}\""
     done
 done
 

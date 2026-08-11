@@ -161,6 +161,17 @@ function Pandoc(doc)
     _, custom_id = custom_id:match(order_regex)
   end
 
+  if doc.meta.filename_as_date then
+    local date_str = pandoc.utils.normalize_date(title)
+
+    if date_str then
+      local year, month, day = date_str:match("(%d+)-(%d+)-(%d+)")
+      local timestamp = os.time({year=tonumber(year), month=tonumber(month), day=tonumber(day)})
+
+      title = "[" .. os.date("%Y-%m-%d %a", timestamp) .. "]"
+    end
+  end
+
   local title_header = pandoc.Header(n, title)
 
   if custom_id and custom_id ~= "" then

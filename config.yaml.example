@@ -41,6 +41,11 @@ remap:
     inputs:
       - source: data-science/**/*.org
         path_as_headings: true
+  - output: admin/log.org
+    title: Log
+    inputs:
+      - source: log/*.org
+        filename_as_date: true
 assets:
   - target: content/assets/
     roots:
