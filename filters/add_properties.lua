@@ -37,11 +37,11 @@ function Pandoc(doc)
   for _, prop in ipairs(prop_order) do
     if doc.meta[prop] then
       if prop == "doc_title" then
-        title = pandoc.utils.stringify(doc.meta.title or "")
+        title = doc.meta.title
         doc.meta.title = doc.meta[prop]
 
       elseif prop == "title" then
-        if title ~= "" then
+        if title then
           insert_prop(doc, "title", title)
         end
 
