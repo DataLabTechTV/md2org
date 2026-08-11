@@ -1,5 +1,6 @@
 options:
   remove_transparency: true
+  dot_ignore: true
 ignore:
   filetags:
     - clippings

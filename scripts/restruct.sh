@@ -57,3 +57,24 @@ for oidx in $(yq ".remap[] | path | .[-1]" "$CONFIG_PATH"); do
                 \"{5}\" \"{6}\" \"{7}\" \"{8}\""
     done
 done
+
+opt_dot_ignore="$(yq '.options.dot_ignore // false' "$CONFIG_PATH")"
+
+if [ "$opt_dot_ignore" = "true" ]; then
+    ignore=(
+        'assets/'
+        'diagrams/'
+        '*.png'
+        '*.jpg'
+        '*.jpeg'
+        '*.webp'
+        '*.svg'
+        '*.wav'
+        '*.mp3'
+        '*.mp4'
+        '*.avi'
+        '*.mkv'
+    )
+    log INFO "Creating '.ignore' for ${ignore[*]}..."
+    printf '%s\n' "${ignore[@]}" >"$ORG_REMAPPED_DIR/.ignore"
+fi
